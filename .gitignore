@@ -1,0 +1,33 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+# Byte-compiled / optimized / DLL files
+.git/
+__pycache__/
+*.pyc
+*$py.class
+
+# Customize
+.idea/
+.DS_Store
+media/
+.idea
+.vscode
+
+database.py
+root_local.py
+*.sublime*
+.editorconfig
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+
+
