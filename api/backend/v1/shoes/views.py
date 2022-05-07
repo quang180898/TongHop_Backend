@@ -254,9 +254,20 @@ class ShoesStore(APIView):
                 image_bytes=image.read()
             )
             for cate in category_id:
-                shoes_cate = Shoes_category.objects.create(
+                shoes_cate_create = Shoes_category.objects.create(
                     shoes=shoes_new.id,
                     category_id=cate
+                )
+            shoes_discount_create = Shoes_discount.objects.create(
+                shoes_id=shoes.id,
+                discount_percent=0,
+                end_discount_date=datetime.now()
+            )
+            for item in size_quantity:
+                shoes_quantity_create = Shoes_quantity.objects.create(
+                    shoes_id=shoes.id,
+                    size=item['size'],
+                    quantity=item['quantity']
                 )
             return self.response(self.response_success({"shoes_id": shoes_new.id}))
 
