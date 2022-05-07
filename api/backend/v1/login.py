@@ -1,7 +1,7 @@
 from django.contrib.auth.hashers import check_password
 
 from api.base.apiViews import APIView
-from core.postgres.library.customer.models import Customer
+from core.postgres.shoes_store.customer.models import Customer
 from library.constant.api import (
     SERVICE_CODE_NOT_EXISTS_BODY, SERVICE_CODE_BODY_PARSE_ERROR, SERVICE_CODE_CUSTOMER_ERROR,
     SERVICE_CODE_WRONG_PASSWORD
