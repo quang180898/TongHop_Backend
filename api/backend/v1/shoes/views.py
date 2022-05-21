@@ -7,6 +7,7 @@ from core.postgres.shoes_store.shoes.models import (
     Shoes,
     Shoes_category,
     Shoes_discount,
+    Shoes_image,
     Shoes_quantity
 )
 from library.constant.api import (
@@ -197,17 +198,8 @@ class ShoesStore(APIView):
         brand_id = convert_to_int(content.get('brand_id'))
         gender = convert_to_int(content.get('gender'))
         size_quantity = content.get('size_quantity')
-        image = request.FILES['image'] if request.FILES.get('image') else None
-        image_name = content.get('image_name')
-
+        image = request.FILES.getlist('image', None)
         if image:
-            if image_name is None:
-                return self.validate_exception("missing image_name!")
-
-            img = image_name.split('.')[-1]
-            image_name = get_constant_file_type_from_extension(img)
-            if image_name is None:
-                return self.response_exception(code=SERVICE_CODE_FORMAT_NOT_SUPPORTED)
             size = request.headers['content-length']
             if int(size) > DATA_UPLOAD_MAX_MEMORY_SIZE:
                 return self.response_exception(code=SERVICE_CODE_FILE_SIZE)
@@ -250,21 +242,25 @@ class ShoesStore(APIView):
                 description=description,
                 retail_price=retail_price,
                 wholesale_price=wholesale_price,
-                brand_id=brand_id,
-                image_bytes=image.read()
+                brand_id=brand_id
             )
             for cate in category_id:
-                shoes_cate_create = Shoes_category.objects.create(
+                Shoes_category.objects.create(
                     shoes=shoes_new.id,
                     category_id=cate
                 )
-            shoes_discount_create = Shoes_discount.objects.create(
+            for img in image:
+                Shoes_image.objects.create(
+                    shoes_id=shoes.id,
+                    image_bytes=img.read()
+                )
+            Shoes_discount.objects.create(
                 shoes_id=shoes.id,
                 discount_percent=0,
                 end_discount_date=datetime.now()
             )
             for item in size_quantity:
-                shoes_quantity_create = Shoes_quantity.objects.create(
+                Shoes_quantity.objects.create(
                     shoes_id=shoes.id,
                     size=item['size'],
                     quantity=item['quantity']
@@ -284,6 +280,9 @@ class ShoesStore(APIView):
             shoes_user = Customer_shoes.objects.filter(shoes_id=shoes_id, deleted_flag=False)
             if shoes_user:
                 shoes_user.update(deleted_flag=True)
+            shoes_image = Shoes_image.objects.filter(shoes_id=shoes_id, deleted_flag=False)
+            if shoes_image:
+                shoes_image.update(deleted_flag=True)
             delete.deleted_flag = True
             delete.save()
             return self.response(self.response_success("Success!"))

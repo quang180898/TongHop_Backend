@@ -39,30 +39,12 @@ class Shoes(BaseModel):
     retail_price = models.IntegerField(db_column='retail_price', null=True, blank=True)
     wholesale_price = models.IntegerField(db_column='wholesale_price', null=True, blank=True)
     description = models.CharField(max_length=1000, db_column='description', null=True, blank=True)
-    image_bytes = models.BinaryField(db_column='image_bytes')
     deleted_flag = models.BooleanField(db_column='deleted_flag', default=False)
 
     class Meta(BaseModel.Meta):
         db_table = 'shoes'
         verbose_name_plural = _('Shoes')
 
-    @property
-    def get_image(self):
-        try:
-            return base64.b64encode(self.image_bytes).decode('utf-8')
-        except:
-            return None
-
-    @property
-    def get_thumbnail(self):
-        try:
-            image = Image.open(io.BytesIO(self.image_bytes))
-            image.thumbnail((90, 90))
-            data = io.BytesIO()
-            image.save(data, format="PNG")
-            return base64.b64encode(data.getvalue()).decode('utf-8')
-        except:
-            return None
 
 class Shoes_quantity(BaseModel):
     id = models.BigAutoField(db_column='id', primary_key=True)
@@ -117,3 +99,25 @@ class Shoes_category(BaseModel):
     class Meta(BaseModel.Meta):
         db_table = 'shoes_category'
         verbose_name_plural = _('Shoes Category')
+
+
+class Shoes_image(BaseModel):
+    id = models.BigAutoField(db_column='id', primary_key=True)
+    shoes = models.ForeignKey(
+        Shoes, db_column='shoes_id',
+        blank=True, null=True,
+        on_delete=models.PROTECT,
+        verbose_name=_('ShoesID')
+    )
+    image_bytes = models.BinaryField(db_column='image_bytes')
+    deleted_flag = models.BooleanField(db_column='deleted_flag', default=False)
+    class Meta(BaseModel.Meta):
+        db_table = 'shoes_image'
+        verbose_name_plural = _('Shoes Image')
+
+    @property
+    def get_image(self):
+        try:
+            return base64.b64encode(self.image_bytes).decode('utf-8')
+        except:
+            return None
