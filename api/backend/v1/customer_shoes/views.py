@@ -111,11 +111,10 @@ class AccountShoes(APIView):
         except Shoes_quantity.DoesNotExist():
             return self.validate_exception("Không tìm thấy size!")
 
-        shoes_quantity.quantity = shoes_quantity.quantity - quantity
-        if shoes_quantity.quantity < 0:
+        if shoes_quantity.quantity < quantity:
             return self.validate_exception("Không đủ số lượng size giày còn lại để bán!")
-        else:
-            shoes_quantity.save()
+        shoes_quantity.quantity = shoes_quantity.quantity - quantity
+        shoes_quantity.save()
         return self.response(self.response_success({
             "customer_id": shoes_customer.customer_id,
             "shoes_id": shoes_customer.shoes_id,
