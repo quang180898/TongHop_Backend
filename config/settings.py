@@ -161,11 +161,8 @@ MEDIA_URL = '/media/'
 
 # Mail
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'mail2.minerva.vn'
-EMAIL_HOST_USER = 'info@minerva.local'
-EMAIL_HOST_PASSWORD = 'Minerva@2020'
-EMAIL_PORT = 465
-EMAIL_HOST_STRING = 'Minerva <' + EMAIL_HOST_USER + '>'
+EMAIL_HOST_USER = 'gsneaker118@gmail.com'
+EMAIL_HOST_PASSWORD = 'Quang123'
 
 DEFAULT_LANGUAGE_ID = 2
 

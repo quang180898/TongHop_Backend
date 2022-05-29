@@ -2,12 +2,12 @@ import re
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import F
-
+from django.core.mail import send_mail
 from api.base.apiViews import APIView
-from config.settings import DATA_UPLOAD_MAX_MEMORY_SIZE
-from core.postgres.library.book.models import BookUser
-from core.postgres.library.customer.models import Customer
-from core.postgres.library.permission.models import Permission
+from config.settings import DATA_UPLOAD_MAX_MEMORY_SIZE, EMAIL_HOST_USER
+from core.postgres.shoes_store.customer.models import Customer
+from core.postgres.shoes_store.customer.models import Customer_shoes
+from core.postgres.shoes_store.permission.models import Permission
 from library.constant.api import (
     SERVICE_CODE_BODY_PARSE_ERROR,
     SERVICE_CODE_NOT_EXISTS_BODY,
@@ -26,6 +26,7 @@ from library.constant.api import (
     SERVICE_CODE_MOBILE_LENGTH,
     SERVICE_CODE_MOBILE_DUPLICATE,
     SERVICE_CODE_MAIL_DUPLICATE,
+    USER,
 )
 from library.constant.custom_messages import (
     INVALID_REPEAT_PASSWORD,
@@ -36,15 +37,23 @@ from library.constant.custom_messages import (
     WRONG_PASSWORD,
     SAME_PASSWORD
 )
-from library.functions import convert_to_int, is_mobile_valid, convert_byte_to_base64
+from library.functions import convert_to_bool, convert_to_int, is_mobile_valid, convert_byte_to_base64
 from library.service.upload_file import get_constant_file_type_from_extension
 
 
 class Account(APIView):
     def list_user(self, request):
+        name = self.request.query_params.get('name')
+        active_flag = self.request.query_params.get('active_flag')
         user_list = Customer.objects.filter(
             deleted_flag=False
-        ).annotate(
+        )
+        if name:
+            user_list = user_list.filter(name__icontains=name)
+        if active_flag:
+            user_list = user_list.filter(active_flag=active_flag)
+
+        user_list = user_list.annotate(
             permission_code=F('permission__code'),
             permission_name=F('permission__name')
         ).values(
@@ -53,6 +62,7 @@ class Account(APIView):
             'mobile',
             'username',
             'mail',
+            'active_flag',
             'permission_code',
             'permission_name'
         ).order_by('id')
@@ -62,7 +72,8 @@ class Account(APIView):
         user_id = convert_to_int(self.request.query_params.get('user_id'))
         customer = Customer.objects.filter(
             id=user_id,
-            deleted_flag=False
+            deleted_flag=False,
+            active_flag=True
         ).annotate(
             permission_code=F('permission__code'),
             permission_name=F('permission__name')
@@ -74,7 +85,8 @@ class Account(APIView):
             'mail',
             'image_bytes',
             'permission_code',
-            'permission_name'
+            'permission_name',
+            'active_flag'
         ).first()
         if customer:
             customer['image_bytes'] = convert_byte_to_base64(customer['image_bytes'])
@@ -110,7 +122,7 @@ class Account(APIView):
             return self.response_exception(code=SERVICE_CODE_USER_NAME_DUPLICATE)
         if user_name is None or ' ' in user_name:
             self.validate_exception(code=USER_NAME_ERROR)
-        if len(user_name) < 4 or len(user_name) > 25:
+        if len(user_name) < 4 or len(user_name) > 50:
             self.validate_exception(code=USER_NAME_LENGTH)
         if pass_word is None or ' ' in pass_word:
             self.validate_exception(code=NEW_PASSWORD_EMPTY)
@@ -159,7 +171,7 @@ class Account(APIView):
             password=make_password(pass_word),
             mobile=mobile,
             mail=mail,
-            permission_id=2,
+            permission_id=USER,
             image_bytes=image.read()
         )
         permission = Permission.objects.filter(
@@ -169,6 +181,14 @@ class Account(APIView):
             'name'
         ).first()
 
+        subject = "HOÀN TẤT ĐĂNG KÝ"
+        message = f'Cảm ơn {name} đã đăng ký tài khoản tại website của chúng tôi!'
+        mail = send_mail(
+            subject=subject,
+            message=message,
+            from_email=EMAIL_HOST_USER,
+            recipient_list=[mail]
+        )
         return self.response(self.response_success({
             "user_id": user_new.id,
             "name": user_new.name,
@@ -191,7 +211,7 @@ class Account(APIView):
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR)
         user_id = convert_to_int(content.get("user_id"))
         name = content.get("name")
-        mail = content.get("mail")
+        # mail = content.get("mail")
         mobile = content.get("mobile")
         address = content.get("address")
         image = request.FILES['image'] if request.FILES.get('image') else None
@@ -214,7 +234,7 @@ class Account(APIView):
             except Customer.DoesNotExist:
                 return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
             customer.name = name if name is not None else customer.name
-            customer.mail = mail if mail is not None else customer.mail
+            # customer.mail = mail if mail is not None else customer.mail
             customer.mobile = mobile if mobile is not None else customer.mobile
             customer.address = address if address is not None else customer.address
             if image:
@@ -276,6 +296,26 @@ class Account(APIView):
         else:
             return self.validate_exception("Missing user_id!")
 
+    def update_active(self, request):
+        if not request.body:
+            return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
+        try:
+            content = self.decode_to_json(request.body)
+        except Exception as ex:
+            return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
+        account_id = content.get('account_id')
+        active_flag = convert_to_bool(content.get('active_flag'))
+        try:
+            change_active = Customer.objects.get(id=account_id, deleted_flag=False)
+        except Customer.DoesNotExist():
+            return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
+        if active_flag:
+            change_active.active_flag = active_flag
+        return self.response(self.response_success({
+                "customer_id": change_active.id,
+                "customer_active_flag": change_active.active_flag
+            }))
+
     def delete_account(self, request):
         if not request.body:
             return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
@@ -286,7 +326,7 @@ class Account(APIView):
         account_id = content.get('account_id')
         delete = Customer.objects.filter(id=account_id, deleted_flag=False).first()
         if delete:
-            book_user = BookUser.objects.filter(user_id=account_id, deleted_flag=False)
+            book_user = Customer_shoes.objects.filter(user_id=account_id, deleted_flag=False)
             if book_user:
                 book_user.update(deleted_flag=True)
             delete.deleted_flag = True

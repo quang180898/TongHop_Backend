@@ -83,9 +83,9 @@ CUSTOM_ERROR_MESSAGE = {
         'zh-hans': 'Username Invalid',
     },
     USER_NAME_LENGTH: {
-        'vi': 'Tên đăng nhập có nhiều nhất 25 ký tự và ít nhất 8 ký tự',
-        'en': 'Username is at most 25 characters and at least 4 characters',
-        'zh-hans': 'Username is at most 25 characters and at least 4 characters',
+        'vi': 'Tên đăng nhập có nhiều nhất 50 ký tự và ít nhất 8 ký tự',
+        'en': 'Username is at most 50 characters and at least 4 characters',
+        'zh-hans': 'Username is at most 50 characters and at least 4 characters',
     },
     PASSWORD_LENGTH: {
         'vi': 'Mật khẩu có nhiều nhất 25 ký tự và ít nhất 8 ký tự',

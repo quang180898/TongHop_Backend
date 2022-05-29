@@ -407,8 +407,8 @@ CAMERA_RECORDING_CHOICE = ((k, v) for k, v in CAMERA_RECORDING_TYPE.items())
 CAMERA_RECORDING_LIST = ((k, v) for k, v in CAMERA_RECORDING_TYPE.items())
 
 ADMIN = 1
-MANAGER = 2
-USER = 3
+USER = 2
+MANAGER = 3
 
 USER_PERMISSION = {
     ADMIN: _('Admin'),

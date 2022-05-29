@@ -13,11 +13,19 @@ class Brand(BaseModel):
     name = models.CharField(max_length=150, db_column='name', blank=True, null=True)
     code = models.IntegerField(db_column='permission_code', null=True, blank=True)
     description = models.CharField(max_length=1000, db_column='description', null=True, blank=True)
+    image_bytes = models.BinaryField(db_column='image_bytes')
     deleted_flag = models.BooleanField(db_column='deleted_flag', default=False)
 
     class Meta(BaseModel.Meta):
         db_table = 'brand'
         verbose_name_plural = _('Brand')
+
+    @property
+    def get_image(self):
+        try:
+            return base64.b64encode(self.image_bytes).decode('utf-8')
+        except:
+            return None
 
 
 class Shoes(BaseModel):

@@ -200,9 +200,14 @@ class ShoesStore(APIView):
         size_quantity = content.get('size_quantity')
         image = request.FILES.getlist('image', None)
         if image:
-            size = request.headers['content-length']
-            if int(size) > DATA_UPLOAD_MAX_MEMORY_SIZE:
-                return self.response_exception(code=SERVICE_CODE_FILE_SIZE)
+            for img in image:
+                img_format = str(img).split('.')[-1]
+                image_name = get_constant_file_type_from_extension(img_format)
+                if image_name is None:
+                    return self.response_exception(code=SERVICE_CODE_FORMAT_NOT_SUPPORTED)
+                size = request.headers['content-length']
+                if int(size) > DATA_UPLOAD_MAX_MEMORY_SIZE:
+                    return self.response_exception(code=SERVICE_CODE_FILE_SIZE, mess=f"size of {img} > 2.5MB!")
         if shoes_id:
             try:
                 shoes = Shoes.objects.get(id=shoes_id, deleted_flag=False)

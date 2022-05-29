@@ -13,6 +13,7 @@ from library.constant.api import GENDER_TYPE_MALE, GENDER_TYPE_CHOICE
 class Customer(BaseModel):
     id = models.BigAutoField(db_column='id', primary_key=True)
     name = models.CharField(max_length=150, db_column='name', blank=True)
+    username = models.CharField(max_length=50, db_column='username', blank=True)
     password = models.CharField(max_length=255, db_column='password', null=True, blank=True)
     mail = models.CharField(max_length=255, db_column='mail', null=True, blank=True)
     mobile = models.CharField(max_length=10, db_column='mobile', blank=True, null=True)
@@ -31,6 +32,7 @@ class Customer(BaseModel):
     )
     birthdate = models.DateTimeField(db_column='birthdate', null=True, blank=True)
     image_bytes = models.BinaryField(db_column='image_bytes')
+    active_flag =  models.BooleanField(db_column='active_flag', default=True)
     deleted_flag = models.BooleanField(db_column='deleted_flag', default=False)
 
     class Meta(BaseModel.Meta):
