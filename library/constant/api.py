@@ -338,7 +338,7 @@ SERVICE_MESSAGE = {
     },
     SERVICE_CODE_CATEGORY_NOT_EXIST: {
         'en': "Category not exists!",
-        'vi': "Thể loại sách không tồn tại trong hệ thống!"
+        'vi': "Thể loại giày không tồn tại trong hệ thống!"
     },
     SERVICE_CODE_BRAND_NOT_EXIST: {
         'en': "Brand not exists!",

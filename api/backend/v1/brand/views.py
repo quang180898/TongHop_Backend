@@ -21,16 +21,15 @@ class ShoesBrand(APIView):
         ).annotate(
             brand_id=F('id'),
             brand_name=F('name'),
-            brandy_description=F('description')
+            brand_description=F('description')
         ).values(
             'brand_id',
             'brand_name',
-            'image_bytes',
-            'brand_description'
+            'image_bytes'
         ).order_by('brand_id')
         for img in brand_list:
             base64 = convert_byte_to_base64(img['image_bytes'])
-            brand_list['image_bytes'] = base64
+            img['image_bytes'] = base64
         self.pagination(brand_list)
         return self.response(self.response_paging(self.paging_list))
 
@@ -43,10 +42,12 @@ class ShoesBrand(APIView):
         if brand:
             brand= brand.annotate(
                 brand_id=F('id'),
+                brand_code=F('code'),
                 brand_name=F('name'),
                 brand_description=F('description')
             ).values(
                 'brand_id',
+                'brand_code',
                 'brand_name',
                 'image_bytes',
                 'brand_description'
@@ -61,17 +62,18 @@ class ShoesBrand(APIView):
         if not request.data:
             return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
         try:
-            content = request.data
+            content = request.POST
         except Exception as ex:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
         
         key_content_list = list(content.keys())
-        check_keys_list = ['name', 'image']
+        check_keys_list = ['name', 'code']
 
         brand_id = convert_to_int(content.get('brand_id'))
         name = content.get('name')
+        code = content.get('code')
         description = content.get('description')
-        image = request.FILES.get('image', None)
+        image = request.FILES['image'] if request.FILES.get('image') else None
         if image:
             img_format = str(image).split('.')[-1]
             image_name = get_constant_file_type_from_extension(img_format)
@@ -86,13 +88,15 @@ class ShoesBrand(APIView):
             except Brand.DoesNotExist:
                 return self.response_exception(code=SERVICE_CODE_NOT_FOUND)
             brand.name = name if name is not None else brand.name
+            brand.code = code if code is not None else brand.code
             brand.image_bytes = image.read() if image is not None else brand.image_bytes
             brand.description = description if description is not None else brand.description
             brand.save()
             return self.response(self.response_success({
                 "brand_id": brand.id,
                 "brand_name": brand.name,
-                "brand_image_bytes": brand.image_bytes,
+                "brand_code": brand.code,
+                "brand_image_bytes": brand.get_image,
                 "brand_description": brand.description
             }))
         else:
@@ -105,13 +109,14 @@ class ShoesBrand(APIView):
 
             brand = Brand.objects.create(
                 name=name,
+                code=code,
                 image_bytes=image.read(),
                 description=description
             )
             return self.response(self.response_success({
                 "brand_id": brand.id,
                 "brand_name": brand.name,
-                "brand_image_bytes": brand.image_bytes,
+                "brand_image_bytes": brand.get_image,
                 "brand_description": brand.description
             }))
 

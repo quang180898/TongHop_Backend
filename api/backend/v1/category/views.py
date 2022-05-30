@@ -42,7 +42,7 @@ class ShoesCategory(APIView):
                 'category_id',
                 'category_name',
                 'category_description'
-            ).order_by('category_id')
+            ).first()
             return self.response(self.response_success(category))
         else:
             return self.response_exception(code=SERVICE_CODE_CATEGORY_NOT_EXIST)
