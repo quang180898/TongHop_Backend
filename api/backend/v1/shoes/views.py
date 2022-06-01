@@ -1,3 +1,4 @@
+import ast
 from datetime import datetime
 from django.db.models import F, Q
 from api.base.apiViews import APIView
@@ -62,11 +63,11 @@ class ShoesStore(APIView):
             'retail_price'
         ).order_by('shoes_id')
         for shoes in shoes_list:
-            discount = Shoes_discount.objects.get(
+            discount = Shoes_discount.objects.filter(
                 shoes_id=shoes['shoes_id'],
                 end_discount_date__gte=date_check,
                 deleted_flag=False
-            )
+            ).first()
             if discount:
                 sale_price = shoes['retail_price'] * ((100 - discount.discount_percent)/100)
                 shoes['discount_percent'] = discount.discount_percent
@@ -76,7 +77,7 @@ class ShoesStore(APIView):
                 deleted_flag=False
             ).first()
             if image:
-                base64 = convert_byte_to_base64(image['image_bytes'])
+                base64 = image.get_image
                 shoes['image_bytes'] = base64
         self.pagination(shoes_list)
         return self.response(self.response_paging(self.paging_list))
@@ -105,24 +106,25 @@ class ShoesStore(APIView):
                 'shoes_brand_name',
                 'shoes_category_id',
                 'shoes_category_name',
-            ).order_by('shoes_id').first()
+            ).first()
 
             image = Shoes_image.objects.filter(
                 shoes_id=shoes['shoes_id'],
                 deleted_flag=False
             ).values(
+                'shoes_id',
                 'image_bytes'
             )
             image_list = []
             for img in image:
                 image_list.append({
-                    "image_id": img['id'],
+                    "image_id": img['shoes_id'],
                     "image_bytes": convert_byte_to_base64(img['image_bytes'])
                 })
             shoes['image_bytes'] = image_list
             # get shoes quantity
             shoes_quantity = Shoes_quantity.objects.filter(
-                shoes_id=shoes['id'],
+                shoes_id=shoes['shoes_id'],
                 deleted_flag=False
             ).values(
                 "size",
@@ -130,31 +132,57 @@ class ShoesStore(APIView):
             )
             # get shoes discount
             shoes_discount = Shoes_discount.objects.filter(
-                shoes_id=shoes['id'],
+                shoes_id=shoes['shoes_id'],
                 end_discount_date__gte=date_check,
                 deleted_flag=False
-            ).values(
-                # "shoes_id",
-                "discount_percent",
-                "end_discount_date"
             )
-            result = {
-                "info_shoes": {
-                    "shoes_id": shoes['id'],
-                    "shoes_name": shoes['name'],
-                    "shoes_code": shoes['code'],
-                    "shoes_gender": shoes['gender'],
-                    "shoes_description": shoes['description'],
-                    "shoes_retail_price": shoes['retail_price'],
-                    "shoes_brand_id": shoes['shoes_brand_id'],
-                    "shoes_brand_name": shoes['shoes_brand_name'],
-                    "shoes_category_id": shoes['category_id'],
-                    "shoes_category_name": shoes['shoes_category_name'],
-                    "shoes_image_bytes": shoes['image_bytes']
-                },
-                "shoes_quantity": list(shoes_quantity),
-                "shoes_discount": shoes_discount,
-            }
+            if shoes_discount:
+                shoes_discount = shoes_discount.values(
+                    "discount_percent",
+                    "end_discount_date"
+                    ).first()
+
+                result = {
+                    "info_shoes": {
+                        "shoes_id": shoes['shoes_id'],
+                        "shoes_name": shoes['shoes_name'],
+                        "shoes_code": shoes['shoes_code'],
+                        "shoes_gender": shoes['gender'],
+                        "shoes_description": shoes['description'],
+                        "shoes_retail_price": shoes['retail_price'],
+                        "shoes_brand_id": shoes['shoes_brand_id'],
+                        "shoes_brand_name": shoes['shoes_brand_name'],
+                        "shoes_category_id": shoes['shoes_category_id'],
+                        "shoes_category_name": shoes['shoes_category_name'],
+                        "shoes_image_bytes": shoes['image_bytes']
+                    },
+                    "shoes_quantity": list(shoes_quantity),
+                    "shoes_discount": {
+                        "discount_percent": shoes_discount['discount_percent'],
+                        "end_discount_date": shoes_discount['end_discount_date']
+                    }
+                }
+            else:
+                result = {
+                    "info_shoes": {
+                        "shoes_id": shoes['shoes_id'],
+                        "shoes_name": shoes['shoes_name'],
+                        "shoes_code": shoes['shoes_code'],
+                        "shoes_gender": shoes['gender'],
+                        "shoes_description": shoes['description'],
+                        "shoes_retail_price": shoes['retail_price'],
+                        "shoes_brand_id": shoes['shoes_brand_id'],
+                        "shoes_brand_name": shoes['shoes_brand_name'],
+                        "shoes_category_id": shoes['shoes_category_id'],
+                        "shoes_category_name": shoes['shoes_category_name'],
+                        "shoes_image_bytes": shoes['image_bytes']
+                    },
+                    "shoes_quantity": list(shoes_quantity),
+                    "shoes_discount": {
+                        "discount_percent": None,
+                        "end_discount_date": None
+                    }
+                }
             return self.response(self.response_success(result))
         else:
             return self.response_exception(code=SERVICE_CODE_NOT_FOUND)
@@ -171,9 +199,9 @@ class ShoesStore(APIView):
             Q(deleted_flag=False)
         ).annotate(
             shoes_id=F('id'),
-            shoes_name=F('shoes_name'),
-            shoes_code=F('shoes_code'),
-            shoes_gender=F('shoes_code'),
+            shoes_name=F('name'),
+            shoes_code=F('code'),
+            shoes_gender=F('gender'),
             shoes_brand_id=F('brand'),
             shoes_brand_name=F('brand__name')
         ).values(
@@ -182,13 +210,12 @@ class ShoesStore(APIView):
             'shoes_code',
             'gender',
             'retail_price'
-        ).order_by('id')
+        ).order_by('shoes_id')
         for item in shoes_same_category:
             image = Shoes_image.objects.filter(
                 shoes_id=item['shoes_id'],
                 deleted_flag=False
             ).values(
-                'id',
                 'image_bytes'
             ).first()
             base64 = convert_byte_to_base64(image['image_bytes'])
@@ -204,14 +231,14 @@ class ShoesStore(APIView):
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR)
 
         key_content_list = list(content.keys())
-        check_keys_list = ['name', 'code', 'gender', 'category_id', 'brand_id', 'retail_price', 'wholesale_price', 'size', 'quantity']
+        check_keys_list = ['name', 'code', 'gender', 'category_id', 'brand_id', 'retail_price', 'wholesale_price', 'size_quantity']
         shoes_id = content.get('shoes_id')
         name = content.get('name')
         code = content.get('code')
         description = content.get('description')
-        retail_price = convert_to_float(content.get('price'))
-        wholesale_price = convert_to_float(content.get('price'))
-        category_id = content.get('category_id')
+        retail_price = convert_to_int(content.get('retail_price'))
+        wholesale_price = convert_to_int(content.get('wholesale_price'))
+        category_id = convert_to_int(content.get('category_id'))
         brand_id = convert_to_int(content.get('brand_id'))
         gender = convert_to_int(content.get('gender'))
         size_quantity = content.get('size_quantity')
@@ -235,19 +262,12 @@ class ShoesStore(APIView):
             shoes.code = code if code is not None else shoes.code
             shoes.gender = gender if gender > 0 else shoes.gender
             shoes.brand_id = brand_id if brand_id > 0 else shoes.brand_id
+            shoes.category_id = category_id if category_id > 0 else shoes.category_id
             shoes.retail_price = retail_price if retail_price > 0.0 else shoes.retail_price
             shoes.wholesale_price = wholesale_price if wholesale_price > 0 else shoes.wholesale_price
             if image:
                 shoes.image_bytes = image.read()
             shoes.save()
-            if category_id:
-                for cate in category_id:
-                    try:
-                        shoes_cate = Shoes_category.objects.get(shoes_id=shoes_id, category_id=cate, deleted_falg=False)
-                    except Shoes_category.DoesNotExist():
-                        return self.response_exception(code=SERVICE_CODE_NOT_FOUND)
-                    shoes_cate.category_id = cate if cate > 0 else shoes_cate.category_id
-                shoes_cate.save()
             return self.response(self.response_success({"shoes_id": shoes.id}))
         else:
             if not all(key in key_content_list for key in check_keys_list):
@@ -264,28 +284,24 @@ class ShoesStore(APIView):
                 description=description,
                 retail_price=retail_price,
                 wholesale_price=wholesale_price,
-                brand_id=brand_id
+                brand_id=brand_id,
+                category_id=category_id
             )
-            for cate in category_id:
-                Shoes_category.objects.create(
-                    shoes=shoes_new.id,
-                    category_id=cate
-                )
             for img in image:
                 Shoes_image.objects.create(
-                    shoes_id=shoes.id,
+                    shoes_id=shoes_new.id,
                     image_bytes=img.read()
                 )
             Shoes_discount.objects.create(
-                shoes_id=shoes.id,
+                shoes_id=shoes_new.id,
                 discount_percent=0,
                 end_discount_date=datetime.now()
             )
-            for item in size_quantity:
+            for qs in ast.literal_eval(size_quantity):
                 Shoes_quantity.objects.create(
-                    shoes_id=shoes.id,
-                    size=item['size'],
-                    quantity=item['quantity']
+                    shoes_id=shoes_new.id,
+                    size=qs['size'],
+                    quantity=qs['quantity']
                 )
             return self.response(self.response_success({"shoes_id": shoes_new.id}))
 
@@ -296,7 +312,7 @@ class ShoesStore(APIView):
             content = self.decode_to_json(request.body)
         except Exception as ex:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
-        shoes_id = content.get('shoes_id')
+        shoes_id = convert_to_int(content.get('shoes_id'))
         delete = Shoes.objects.filter(id=shoes_id, deleted_flag=False).first()
         if delete:
             shoes_user = Customer_shoes.objects.filter(shoes_id=shoes_id, deleted_flag=False)
@@ -305,6 +321,12 @@ class ShoesStore(APIView):
             shoes_image = Shoes_image.objects.filter(shoes_id=shoes_id, deleted_flag=False)
             if shoes_image:
                 shoes_image.update(deleted_flag=True)
+            shoes_discount = Shoes_discount.objects.filter(shoes_id=shoes_id, deleted_flag=False)
+            if shoes_discount:
+                shoes_discount.update(deleted_flag=True)
+            shoes_size_quantity = Shoes_quantity.objects.filter(shoes_id=shoes_id, deleted_flag=False)
+            if shoes_size_quantity:
+                shoes_size_quantity.update(deleted_flag=True)
             delete.deleted_flag = True
             delete.save()
             return self.response(self.response_success("Success!"))

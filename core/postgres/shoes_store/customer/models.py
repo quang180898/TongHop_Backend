@@ -61,13 +61,13 @@ class Customer(BaseModel):
 class Customer_shoes(BaseModel):
     id = models.BigAutoField(db_column='id', primary_key=True)
     Customer = models.ForeignKey(
-        Customer, db_column='customer_id',
+        Customer, db_column='customer',
         blank=True, null=True,
         on_delete=models.PROTECT,
         verbose_name=_('Customer')
     )
     shoes = models.ForeignKey(
-        Shoes, db_column='shoes_id',
+        Shoes, db_column='shoes',
         blank=True, null=True,
         on_delete=models.PROTECT,
         verbose_name=_('Shoes')
@@ -84,13 +84,13 @@ class Customer_shoes(BaseModel):
 class Customer_favorite(BaseModel):
     id = models.BigAutoField(db_column='id', primary_key=True)
     Customer = models.ForeignKey(
-        Customer, db_column='customer_id',
+        Customer, db_column='customer',
         blank=True, null=True,
         on_delete=models.PROTECT,
         verbose_name=_('Customer')
     )
     category = models.ForeignKey(
-        Category, db_column='category_id',
+        Category, db_column='category',
         blank=True, null=True,
         on_delete=models.PROTECT,
         verbose_name=_('Category')
@@ -105,7 +105,7 @@ class Customer_favorite(BaseModel):
 class Customer_debt(BaseModel):
     id = models.BigAutoField(db_column='id', primary_key=True)
     Customer = models.ForeignKey(
-        Customer, db_column='customer_id',
+        Customer, db_column='customer',
         blank=True, null=True,
         on_delete=models.PROTECT,
         verbose_name=_('Customer')

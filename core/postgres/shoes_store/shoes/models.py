@@ -41,7 +41,7 @@ class Shoes(BaseModel):
         verbose_name=_('Category')
     )
     name = models.CharField(max_length=150, db_column='name', blank=True, null=True)
-    code = models.IntegerField(db_column='code', null=True, blank=True)
+    code = models.CharField(max_length=20, db_column='code', null=True, blank=True)
     gender = models.IntegerField(
         db_column='gender',
         default=GENDER_TYPE_MALE,
