@@ -90,7 +90,7 @@ DATABASES = {
 # Multi db:
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('using',)
 
-# DATABASE_ROUTERS = ['config.database_router.ModelMetaRouter']
+DATABASE_ROUTERS = ['config.database_router.ModelMetaRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
