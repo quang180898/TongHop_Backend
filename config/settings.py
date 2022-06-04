@@ -153,6 +153,8 @@ DATETIME_INPUT_FORMATS = (
 
 YEAR_MONTH_FORMAT = '%b/%Y'
 
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -172,7 +174,6 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
 
 django_heroku.settings(locals())
 
