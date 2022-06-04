@@ -1,1 +1,1 @@
-web: gunicorn doanbackend.wsgi --log-file -
+web: gunicorn doanbackend.wsgi:application --log-file -
