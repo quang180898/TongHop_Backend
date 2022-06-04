@@ -173,7 +173,7 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
+ALLOWED_HOSTS = ['backend-sneaker.herokuapp.com']
 
 django_heroku.settings(locals())
 
