@@ -12,6 +12,3 @@ opencv-python==4.4.0.46
 imutils==0.5.3
 pika==1.1.0
 crypto==1.4.1
-django-heroku==0.3.1
-dj-database-url==0.5.0
-gunicorn==20.1.0
