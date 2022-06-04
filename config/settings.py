@@ -176,6 +176,8 @@ LON = 106.896973
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
 
+STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+
 django_heroku.settings(locals())
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
