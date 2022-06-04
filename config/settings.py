@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import django.db.models.options as options
-from .database import POSTGRES_DATABASE
+# from .database import POSTGRES_DATABASE
 import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -83,10 +83,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 
-DATABASES = {
-    'default': {},
-    'postgres_db': POSTGRES_DATABASE
-}
+# DATABASES = {
+#     'default': {},
+#     'postgres_db': POSTGRES_DATABASE
+# }
 
 # Multi db:
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('using',)
