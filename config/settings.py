@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import django.db.models.options as options
-# from .database import POSTGRES_DATABASE
+from .database import POSTGRES_DATABASE
 import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -40,6 +40,7 @@ else:
 BACKEND_PROXY_DIRECTIVE = "cctv_api"
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
+
 
 # Application definition
 
@@ -84,20 +85,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 
-# DATABASES = {
-#     'default': {},
-#     'postgres_db': POSTGRES_DATABASE
-# }
-
 DATABASES = {
-    "default": {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': 'd741qslifn6jst',
-            'USER': 'owhkqpvtsnatvj',
-            'PASSWORD': '5b3e2ccc87e158295968c49a8dfb6cdeef24da992e95638aeba8fdf00e64e25e',
-            'HOST': 'ec2-54-147-33-38.compute-1.amazonaws.com',
-            'PORT': 5432
-      }
+    'default': {},
+    'postgres_db': POSTGRES_DATABASE
 }
 
 # Multi db:
