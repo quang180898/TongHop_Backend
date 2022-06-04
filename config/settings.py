@@ -171,7 +171,7 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
 
