@@ -39,6 +39,7 @@ else:
 # Directive (in nginx configure file) to proxy pass to backend server.
 BACKEND_PROXY_DIRECTIVE = "cctv_api"
 
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
 
 # Application definition
 
@@ -153,8 +154,6 @@ DATETIME_INPUT_FORMATS = (
 
 YEAR_MONTH_FORMAT = '%b/%Y'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -174,9 +173,8 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-
-django_heroku.settings(locals())
-
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
 
 DEBUG = True
+
+django_heroku.settings(locals())
