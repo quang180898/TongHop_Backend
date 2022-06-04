@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import django.db.models.options as options
 from .database import POSTGRES_DATABASE
+import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -156,6 +157,7 @@ YEAR_MONTH_FORMAT = '%b/%Y'
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+django_heroku.settings(locals())
 MEDIA_URL = '/media/'
 
 
@@ -169,7 +171,7 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
 
