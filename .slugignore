@@ -1,7 +1,5 @@
+# Heres a comment
 *.psd
 *.pdf
-test
-spec
-features
-doc
-public
+/test
+/spec
