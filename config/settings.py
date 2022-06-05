@@ -30,12 +30,14 @@ SECRET_KEY = 'y_nx76(#pe1u(qv-tifs!$v(w4d(ewa+2o@fjwl^*01-an@8g'
 
 
 # Server's qualified domain name
-try:
-    from .root_local import LOCAL_SERVER_DOMAIN
-except ImportError:
-    pass
-else:
-    SERVER_DOMAIN = LOCAL_SERVER_DOMAIN
+
+SERVER_DOMAIN = "https://backend-sneaker.herokuapp.com"
+# try:
+#     from .root_local import LOCAL_SERVER_DOMAIN
+# except ImportError:
+#     pass
+# else:
+#     SERVER_DOMAIN = LOCAL_SERVER_DOMAIN
 
 # Directive (in nginx configure file) to proxy pass to backend server.
 BACKEND_PROXY_DIRECTIVE = "cctv_api"
