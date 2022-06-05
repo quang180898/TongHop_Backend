@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import django.db.models.options as options
-from .database import POSTGRES_DATABASE
+# from .database import POSTGRES_DATABASE
 import django_heroku
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -83,9 +83,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 
+# DATABASES = {
+#     'default': {},
+#     'postgres_db': POSTGRES_DATABASE
+# }
+
 DATABASES = {
-    'default': {},
-    'postgres_db': POSTGRES_DATABASE
+      "default": {},
+      "postgres_db": {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': 'd741qslifn6jst',
+            'USER': 'owhkqpvtsnatvj',
+            'PASSWORD': '5b3e2ccc87e158295968c49a8dfb6cdeef24da992e95638aeba8fdf00e64e25e',
+            'HOST': 'ec2-54-147-33-38.compute-1.amazonaws.com',
+            'PORT': 5432
+      }
 }
 
 # Multi db:
@@ -157,10 +169,11 @@ YEAR_MONTH_FORMAT = '%b/%Y'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_ROOT= os.path.join(BASE_DIR, 'staticfiles')
+
 STATIC_URL = '/static/'
-MEDIA_ROOT= os.path.join(BASE_DIR, 'media')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Mail
@@ -175,8 +188,8 @@ LON = 106.896973
 
 ALLOWED_HOSTS = ['backend-sneaker.herokuapp.com']
 
-django_heroku.settings(locals())
-
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
 
 DEBUG = True
+
+django_heroku.settings(locals())
