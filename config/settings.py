@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import django.db.models.options as options
-# from .database import POSTGRES_DATABASE
+from .database import POSTGRES_DATABASE
 import django_heroku
 import dj_database_url
 
@@ -31,13 +31,12 @@ SECRET_KEY = 'y_nx76(#pe1u(qv-tifs!$v(w4d(ewa+2o@fjwl^*01-an@8g'
 
 # Server's qualified domain name
 
-SERVER_DOMAIN = "https://backend-sneaker.herokuapp.com"
-# try:
-#     from .root_local import LOCAL_SERVER_DOMAIN
-# except ImportError:
-#     pass
-# else:
-#     SERVER_DOMAIN = LOCAL_SERVER_DOMAIN
+try:
+    from .root_local import LOCAL_SERVER_DOMAIN
+except ImportError:
+    pass
+else:
+    SERVER_DOMAIN = LOCAL_SERVER_DOMAIN
 
 # Directive (in nginx configure file) to proxy pass to backend server.
 BACKEND_PROXY_DIRECTIVE = "cctv_api"
@@ -87,21 +86,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 
-# DATABASES = {
-#     'default': {},
-#     'postgres_db': POSTGRES_DATABASE
-# }
-
 DATABASES = {
-      "default": {},
-      "postgres_db": {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': 'd741qslifn6jst',
-            'USER': 'owhkqpvtsnatvj',
-            'PASSWORD': '5b3e2ccc87e158295968c49a8dfb6cdeef24da992e95638aeba8fdf00e64e25e',
-            'HOST': 'ec2-54-147-33-38.compute-1.amazonaws.com',
-            'PORT': 5432
-      }
+    'default': {},
+    'postgres_db': POSTGRES_DATABASE
 }
 
 db_from_env = dj_database_url.config(conn_max_age=600)

@@ -12,8 +12,6 @@ media/
 .idea
 .vscode
 
-database.py
-root_local.py
 *.sublime*
 .editorconfig
 
