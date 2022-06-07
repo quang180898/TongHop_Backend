@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import django.db.models.options as options
 from .database import POSTGRES_DATABASE
+import django_heroku
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +30,7 @@ SECRET_KEY = 'y_nx76(#pe1u(qv-tifs!$v(w4d(ewa+2o@fjwl^*01-an@8g'
 
 
 # Server's qualified domain name
+
 try:
     from .root_local import LOCAL_SERVER_DOMAIN
 except ImportError:
@@ -47,10 +50,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'django.contrib.contenttypes',
     'django.contrib.auth',
+    'django.contrib.staticfiles'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -85,6 +90,9 @@ DATABASES = {
     'default': {},
     'postgres_db': POSTGRES_DATABASE
 }
+
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES['postgres_db'].update(db_from_env)
 
 # Multi db:
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('using',)
@@ -152,11 +160,16 @@ DATETIME_INPUT_FORMATS = (
 
 YEAR_MONTH_FORMAT = '%b/%Y'
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
+
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Mail
@@ -169,8 +182,10 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['backend-sneaker.herokuapp.com']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
 
 DEBUG = True
+
+django_heroku.settings(locals())
