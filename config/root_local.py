@@ -6,8 +6,6 @@ LOCAL_DEBUG = True
 LOGGER_PRINT = False
 
 # Deployed server's qualified domain name
-# LOCAL_SERVER_DOMAIN = "https://cctvapp.minerva.vn"
-LOCAL_SERVER_DOMAIN = "https://backend-sneaker.herokuapp.com"
 
 # --- Service detect  ---
 SERVICE_DETECT_URL = 'http://172.18.210.18:9001/'
@@ -32,9 +30,9 @@ LAYOUT_SERVICE_KEY = "MTo1ZTAwZjNjZGI4NzRlZDNmZmFhZjUzYWI1OTQ2MGRjYTU1ZDU1YThi"
 
 # LOCAL_SERVER_DOMAIN = "https://cctvapp.minerva.vn"
 
-LOCAL_SERVER_DOMAIN = "https://backend-sneaker.herokuapp.com"
+LOCAL_SERVER_DOMAIN = "https://sneaker-god.netlify.app"
 
-LOCAL_ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'backend-sneaker.herokuapp.com']
+LOCAL_ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'sneaker-god.netlify.app']
 
 # Send mail
 CCTV_WEB_URL = 'sau nay them de xac nhan qua mail'
