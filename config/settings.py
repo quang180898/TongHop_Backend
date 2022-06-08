@@ -182,7 +182,8 @@ DEFAULT_LANGUAGE_ID = 2
 LAT = 16.088042
 LON = 106.896973
 
-ALLOWED_HOSTS = ['backend-sneaker.herokuapp.com']
+# ALLOWED_HOSTS = ['backend-sneaker.herokuapp.com']
+ALLOWED_HOSTS = ['sneaker-god.netlify.app']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5mb
 
