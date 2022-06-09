@@ -49,6 +49,6 @@ class LoginView(APIView):
                     "permission_code": customer_login['permission__code'],
                     "permission_name": customer_login['permission__name'],
                 }))
-            return self.response_exception(code=SERVICE_CODE_WRONG_PASSWORD)
+            return self.response_exception(code=SERVICE_CODE_CUSTOMER_ERROR)
         else:
             return self.response_exception(code=SERVICE_CODE_CUSTOMER_ERROR)
