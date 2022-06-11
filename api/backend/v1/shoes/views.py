@@ -160,6 +160,8 @@ class ShoesStore(APIView):
                     "end_discount_date"
                     ).first()
 
+                sale_price = shoes['retail_price'] * ((100 - shoes_discount['discount_percent'])/100)
+
                 result = {
                     "shoes_id": shoes['shoes_id'],
                     "shoes_name": shoes['shoes_name'],
@@ -173,6 +175,7 @@ class ShoesStore(APIView):
                     "shoes_category_name": shoes['shoes_category_name'],
                     "shoes_image_bytes": shoes['image_bytes'],
                     "shoes_quantity": list(shoes_quantity),
+                    "discount_price": sale_price,
                     "discount_percent": shoes_discount['discount_percent'],
                     "end_discount_date": shoes_discount['end_discount_date']
                 }
@@ -190,6 +193,7 @@ class ShoesStore(APIView):
                     "shoes_category_name": shoes['shoes_category_name'],
                     "shoes_image_bytes": shoes['image_bytes'],
                     "shoes_quantity": list(shoes_quantity),
+                    "discount_price": None,
                     "discount_percent": None,
                     "end_discount_date": None
                 }
