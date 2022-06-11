@@ -19,7 +19,6 @@ class ShoesDiscount(APIView):
             deleted_flag=False
         ).annotate(
             discount_id=F('id'),
-            shoes_id=F('shoes_id'),
             shoes_name=F('shoes__name'),
         ).values(
             'discount_id',
@@ -27,7 +26,7 @@ class ShoesDiscount(APIView):
             'shoes_name',
             'discount_percent',
             'end_discount_date',
-        ).order_by('end_discount_date')
+        ).order_by('-end_discount_date')
         self.pagination(discount)
         return self.response(self.response_paging(self.paging_list))
     
@@ -40,7 +39,6 @@ class ShoesDiscount(APIView):
         if discount:
             discount = discount.annotate(
                 discount_id=F('id'),
-                shoes_id=F('shoes_id'),
                 shoes_name=F('shoes__name')
             ).values(
                 'discount_id',
@@ -48,12 +46,12 @@ class ShoesDiscount(APIView):
                 'shoes_name',
                 'discount_percent',
                 'end_discount_date'
-            )
+            ).first()
             return self.response(self.response_success(discount))
         else:
             return self.response_exception(code=SERVICE_CODE_DISCOUNT_NOT_EXIST)
 
-    def create_or_update(self, request):
+    def update_discount(self, request):
         if not request.data:
             return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
         try:
@@ -61,82 +59,38 @@ class ShoesDiscount(APIView):
         except Exception as ex:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
         key_content_list = list(content.keys())
-        check_keys_list = ['shoes_id', 'percent', 'end_date'] 
-        discount_id = convert_to_int(content.get('discount_id'))
+        check_keys_list = ['shoes_id', 'percent', 'end_discount_date']
         shoes_id = convert_to_int(content.get('shoes_id'))
         percent = convert_to_int(content.get('percent'))
         end_discount_date = content.get('end_discount_date')
+
+        if not all(key in key_content_list for key in check_keys_list):
+            return self.validate_exception(
+                'Missing ' + ", ".join(str(param) for param in check_keys_list if param not in key_content_list))
+        
         date_check = datetime.now()
         if end_discount_date:
             end_discount_date = string_to_time(end_discount_date, '%d/%m/%Y %H:%M:%S')
             if end_discount_date < date_check:
                 return self.response_exception(code=SERVICE_CODE_RECORD_NOT_VALIDATE)
-        if discount_id:
-            try:
-                discount = Shoes_discount.objects.get(id=discount_id, deleted_flag=False)
-            except Shoes_discount.DoesNotExist:
-                return self.response_exception(code=SERVICE_CODE_NOT_FOUND, mess="Discount not exist!")
-            if shoes_id:
-            # check shoes exist
-                try:
-                    shoes = Shoes.objects.get(id=shoes_id, deleted_flag=False)
-                except Shoes.DoesNotExist:
-                    return self.response_exception(code=SERVICE_CODE_NOT_FOUND, mess="Shoes not exist!")
-                # kiem tra xem san pham da ton tai khuyen mai hay chua
-                discount_shoes_check = Shoes_discount.objects.filter(
-                    shoes_id=shoes_id,
-                    end_discount_date__gte=date_check,
-                    deleted_flag=False
-                )
-                if discount_shoes_check:
-                    return self.response_exception(code=SERVICE_CODE_PRODUCT_DISCOUNT_EXIST)
-                else:
-                    discount.shoes_id = shoes_id if shoes_id > 0 else discount.shoes_id
+        try:
+            shoes = Shoes.objects.get(id=shoes_id, deleted_flag=False)
+        except Shoes.DoesNotExist:
+            return self.response_exception(code=SERVICE_CODE_NOT_FOUND, mess="Shoes not exist!")
+        try:
+            discount = Shoes_discount.objects.get(shoes_id=shoes_id, deleted_flag=False)
+        except Shoes_discount.DoesNotExist:
+            return self.response_exception(code=SERVICE_CODE_NOT_FOUND, mess="Discount not exist!")
 
-            discount.discount_percent = percent if percent > 0 else discount.discount_percent
-            discount.end_discount_date = end_discount_date if end_discount_date is not None else discount.end_discount_date
-
-            # kiem tra xem san pham da ton tai khuyen mai hay chua
-            discount_shoes_check = Shoes_discount.objects.filter(
-                shoes_id=shoes_id,
-                end_discount_date__gte=date_check,
-                deleted_flag=False
-            )
-            if discount_shoes_check:
-                return self.response_exception(code=SERVICE_CODE_PRODUCT_DISCOUNT_EXIST)
-            else:
-                discount.save()
-            return self.response(self.response_success({
-                "discount_id": discount.id,
-                "shoes_id": discount.shoes_id,
-                "discount_percent": discount.discount_percent,
-                "end_discount_date": discount.end_discount_date
-            }))
-        else:
-            if not all(key in key_content_list for key in check_keys_list):
-                return self.validate_exception(
-                    'Missing ' + ", ".join(str(param) for param in check_keys_list if param not in key_content_list))
-
-            # kiem tra xem san pham da ton tai khuyen mai hay chua
-            discount_shoes_check = Shoes_discount.objects.filter(
-                shoes_id=shoes_id,
-                end_discount_date__gte=date_check,
-                deleted_flag=False
-            )
-            if discount_shoes_check:
-                return self.response_exception(code=SERVICE_CODE_PRODUCT_DISCOUNT_EXIST)
-
-            discount = Shoes_discount.objects.create(
-                shoes_id=shoes_id,
-                discount_percent=percent,
-                end_discount_date=end_discount_date
-            )
-            return self.response(self.response_success({
-                "discount_id": discount.id,
-                "shoes_id": discount.shoes_id,
-                "discount_percent": discount.discount_percent,
-                "end_discount_date": discount.end_discount_date
-            }))
+        discount.discount_percent = percent if percent >= 0 else discount.discount_percent
+        discount.end_discount_date = end_discount_date if end_discount_date is not None else discount.end_discount_date
+        discount.save()
+        return self.response(self.response_success({
+            "discount_id": discount.id,
+            "shoes_id": discount.shoes_id,
+            "discount_percent": discount.discount_percent,
+            "end_discount_date": discount.end_discount_date
+        }))
 
     def delete_discount(self, request):
         if not request.body:
