@@ -130,13 +130,13 @@ class ShoesStore(APIView):
                 shoes_id=shoes['shoes_id'],
                 deleted_flag=False
             ).values(
-                'shoes_id',
+                'id',
                 'image_bytes'
             )
             image_list = []
             for img in image:
                 image_list.append({
-                    "image_id": img['shoes_id'],
+                    "image_id": img['id'],
                     "image_bytes": convert_byte_to_base64(img['image_bytes'])
                 })
             shoes['image_bytes'] = image_list
