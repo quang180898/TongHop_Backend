@@ -74,6 +74,8 @@ class Customer_shoes(BaseModel):
     )
     quantity = models.IntegerField(db_column='quantity', null=True, blank=True)
     size = models.IntegerField(db_column='size', null=True, blank=True)
+    price = models.IntegerField(db_column='price', null=True, blank=True)
+    total = models.IntegerField(db_column='total', null=True, blank=True)
     deleted_flag = models.BooleanField(db_column='deleted_flag', default=False)
 
     class Meta(BaseModel.Meta):

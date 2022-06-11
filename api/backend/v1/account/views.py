@@ -320,7 +320,7 @@ class Account(APIView):
         active_flag = content.get('active_flag')
         try:
             change_active = Customer.objects.get(id=user_id, deleted_flag=False)
-        except Customer.DoesNotExist():
+        except Customer.DoesNotExist:
             return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
         if active_flag is not None:
             change_active.active_flag = active_flag
