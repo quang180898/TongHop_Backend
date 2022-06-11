@@ -276,7 +276,11 @@ class ShoesStore(APIView):
             shoes.retail_price = retail_price if retail_price > 0.0 else shoes.retail_price
             shoes.wholesale_price = wholesale_price if wholesale_price > 0 else shoes.wholesale_price
             if image:
-                shoes.image_bytes = image.read()
+                for img in image:
+                    Shoes_image.objects.create(
+                        shoes_id=shoes_id,
+                        image_bytes=img.read()
+                    )
             shoes.save()
             return self.response(self.response_success({"shoes_id": shoes.id}))
         else:
