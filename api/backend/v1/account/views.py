@@ -2,7 +2,7 @@ import re
 
 from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import F
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from api.base.apiViews import APIView
 from config.settings import DATA_UPLOAD_MAX_MEMORY_SIZE, EMAIL_HOST_USER
 from core.postgres.shoes_store.customer.models import Customer
@@ -51,7 +51,7 @@ class Account(APIView):
         if name:
             user_list = user_list.filter(name__icontains=name)
         if active_flag:
-            user_list = user_list.filter(active_flag=active_flag)
+            user_list = user_list.filter(active_flag=convert_to_bool(active_flag))
 
         user_list = user_list.annotate(
             permission_code=F('permission__code'),
@@ -66,7 +66,8 @@ class Account(APIView):
             'permission_code',
             'permission_name'
         ).order_by('id')
-        return self.response(self.response_success(list(user_list)))
+        self.pagination(user_list)
+        return self.response(self.response_paging(self.paging_list))
 
     def info_user(self, request):
         user_id = convert_to_int(self.request.query_params.get('user_id'))
@@ -104,11 +105,14 @@ class Account(APIView):
         if content == {}:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR)
         key_content_list = list(content.keys())
-        check_keys_list = ['user_name', 'pass_word', 'password_repeat', 'name', 'mail', 'mobile']
+        check_keys_list = ['user_name', 'pass_word', 'password_repeat', 'name', 'gender', 'mail', 'mobile', 'permission_code']
 
         name = content['name'] if content.get('name') else None
         mobile = content['mobile'] if content.get('mobile') else None
         mail = content['mail'] if content.get('mail') else None
+        address = content['address'] if content.get('address') else None
+        gender = content['gender'] if content.get('gender') else None
+        permission_code = content['permission_code'] if content.get('permission_code') else None
         # user_permission_type = convert_to_int(content['user_permission_type'] if content.get('user_permission_type') else None)
         user_name = content['user_name'] if content.get('user_name') else None
         pass_word = content['pass_word'] if content.get('pass_word') else None
@@ -165,36 +169,41 @@ class Account(APIView):
             size = request.headers['content-length']
             if int(size) > DATA_UPLOAD_MAX_MEMORY_SIZE:
                 return self.response_exception(code=SERVICE_CODE_FILE_SIZE)
+        if not address:
+            address = ""
         user_new = Customer.objects.create(
             name=name,
             username=user_name,
             password=make_password(pass_word),
             mobile=mobile,
             mail=mail,
-            permission_id=USER,
+            address=address,
+            gender=gender,
+            permission_id=permission_code,
             image_bytes=image.read()
         )
         permission = Permission.objects.filter(
             code=user_new.permission_id
         ).values(
+            'id',
             'code',
             'name'
         ).first()
 
         subject = "HOÀN TẤT ĐĂNG KÝ"
-        message = f'Cảm ơn {name} đã đăng ký tài khoản tại website của chúng tôi!'
-        mail = send_mail(
-            subject=subject,
-            message=message,
-            from_email=EMAIL_HOST_USER,
-            recipient_list=[mail]
-        )
+        message = f'Xin Chào {name}, cảm ơn vì đã đăng ký tài khoản tại website của chúng tôi!'
+        from_email=EMAIL_HOST_USER,
+        recipient_list=[user_new.mail,]
+        send_mail(subject, message, from_email, recipient_list)
+        email = EmailMessage(subject, message, from_email, recipient_list)
+        email.send()
         return self.response(self.response_success({
             "user_id": user_new.id,
             "name": user_new.name,
             "mobile": user_new.mobile,
             "email": user_new.mail,
             "user_name": user_new.username,
+            "active_flag": user_new.active_flag,
             "image_base64": user_new.get_image,
             "permission_code": permission['code'],
             "permission_name": permission['name']
@@ -213,6 +222,7 @@ class Account(APIView):
         name = content.get("name")
         # mail = content.get("mail")
         mobile = content.get("mobile")
+        gender = convert_to_int(content.get("gender"))
         address = content.get("address")
         image = request.FILES['image'] if request.FILES.get('image') else None
         image_name = content.get('image_name')
@@ -237,15 +247,18 @@ class Account(APIView):
             # customer.mail = mail if mail is not None else customer.mail
             customer.mobile = mobile if mobile is not None else customer.mobile
             customer.address = address if address is not None else customer.address
+            customer.gender = gender if gender is not None else customer.gender
             if image:
                 customer.image_bytes = image.read()
             customer.save()
             return self.response(self.response_success({
                 "customer_id": customer.id,
                 "customer_name": customer.name,
+                "customer_gender": customer.gender,
                 "customer_mobile": customer.mobile,
                 "customer_address": customer.address,
                 "customer_mail": customer.mail,
+                "customer_active_flag": customer.active_flag,
                 "customer_image_base64": customer.get_image,
             }))
         else:
@@ -303,14 +316,15 @@ class Account(APIView):
             content = self.decode_to_json(request.body)
         except Exception as ex:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
-        account_id = content.get('account_id')
-        active_flag = convert_to_bool(content.get('active_flag'))
+        user_id = content.get('user_id')
+        active_flag = content.get('active_flag')
         try:
-            change_active = Customer.objects.get(id=account_id, deleted_flag=False)
+            change_active = Customer.objects.get(id=user_id, deleted_flag=False)
         except Customer.DoesNotExist():
             return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
-        if active_flag:
+        if active_flag is not None:
             change_active.active_flag = active_flag
+            change_active.save()
         return self.response(self.response_success({
                 "customer_id": change_active.id,
                 "customer_active_flag": change_active.active_flag
@@ -323,13 +337,14 @@ class Account(APIView):
             content = self.decode_to_json(request.body)
         except Exception as ex:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
-        account_id = content.get('account_id')
-        delete = Customer.objects.filter(id=account_id, deleted_flag=False).first()
+        user_id = content.get('user_id')
+        delete = Customer.objects.filter(id=user_id, deleted_flag=False).first()
         if delete:
-            book_user = Customer_shoes.objects.filter(user_id=account_id, deleted_flag=False)
-            if book_user:
-                book_user.update(deleted_flag=True)
+            shoes_user = Customer_shoes.objects.filter(customer_id=user_id, deleted_flag=False)
+            if shoes_user:
+                shoes_user.update(deleted_flag=True)
             delete.deleted_flag = True
+            delete.active_flag = False
             delete.save()
             return self.response(self.response_success("Success!"))
         else:

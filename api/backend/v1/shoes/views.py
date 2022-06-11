@@ -63,6 +63,21 @@ class ShoesStore(APIView):
             'retail_price'
         ).order_by('shoes_id')
         for shoes in shoes_list:
+            shoes_quantity = Shoes_quantity.objects.filter(
+                shoes_id=shoes['shoes_id'],
+                deleted_flag=False
+            ).values(
+                "size",
+                "quantity"
+            )
+            if shoes_quantity:
+                list_size = []
+                for si in shoes_quantity:
+                    list_size.append({
+                        "size": si['size'],
+                        "quantity": si['quantity']
+                    })
+                shoes["shoes_quantity"] = list_size
             discount = Shoes_discount.objects.filter(
                 shoes_id=shoes['shoes_id'],
                 end_discount_date__gte=date_check,
@@ -72,6 +87,9 @@ class ShoesStore(APIView):
                 sale_price = shoes['retail_price'] * ((100 - discount.discount_percent)/100)
                 shoes['discount_percent'] = discount.discount_percent
                 shoes['sale_price'] = sale_price
+            else:
+                shoes['discount_percent'] = 0
+                shoes['sale_price'] = shoes['retail_price']
             image = Shoes_image.objects.filter(
                 shoes_id=shoes['shoes_id'],
                 deleted_flag=False
@@ -143,45 +161,37 @@ class ShoesStore(APIView):
                     ).first()
 
                 result = {
-                    "info_shoes": {
-                        "shoes_id": shoes['shoes_id'],
-                        "shoes_name": shoes['shoes_name'],
-                        "shoes_code": shoes['shoes_code'],
-                        "shoes_gender": shoes['gender'],
-                        "shoes_description": shoes['description'],
-                        "shoes_retail_price": shoes['retail_price'],
-                        "shoes_brand_id": shoes['shoes_brand_id'],
-                        "shoes_brand_name": shoes['shoes_brand_name'],
-                        "shoes_category_id": shoes['shoes_category_id'],
-                        "shoes_category_name": shoes['shoes_category_name'],
-                        "shoes_image_bytes": shoes['image_bytes']
-                    },
+                    "shoes_id": shoes['shoes_id'],
+                    "shoes_name": shoes['shoes_name'],
+                    "shoes_code": shoes['shoes_code'],
+                    "shoes_gender": shoes['gender'],
+                    "shoes_description": shoes['description'],
+                    "shoes_retail_price": shoes['retail_price'],
+                    "shoes_brand_id": shoes['shoes_brand_id'],
+                    "shoes_brand_name": shoes['shoes_brand_name'],
+                    "shoes_category_id": shoes['shoes_category_id'],
+                    "shoes_category_name": shoes['shoes_category_name'],
+                    "shoes_image_bytes": shoes['image_bytes'],
                     "shoes_quantity": list(shoes_quantity),
-                    "shoes_discount": {
-                        "discount_percent": shoes_discount['discount_percent'],
-                        "end_discount_date": shoes_discount['end_discount_date']
-                    }
+                    "discount_percent": shoes_discount['discount_percent'],
+                    "end_discount_date": shoes_discount['end_discount_date']
                 }
             else:
                 result = {
-                    "info_shoes": {
-                        "shoes_id": shoes['shoes_id'],
-                        "shoes_name": shoes['shoes_name'],
-                        "shoes_code": shoes['shoes_code'],
-                        "shoes_gender": shoes['gender'],
-                        "shoes_description": shoes['description'],
-                        "shoes_retail_price": shoes['retail_price'],
-                        "shoes_brand_id": shoes['shoes_brand_id'],
-                        "shoes_brand_name": shoes['shoes_brand_name'],
-                        "shoes_category_id": shoes['shoes_category_id'],
-                        "shoes_category_name": shoes['shoes_category_name'],
-                        "shoes_image_bytes": shoes['image_bytes']
-                    },
+                    "shoes_id": shoes['shoes_id'],
+                    "shoes_name": shoes['shoes_name'],
+                    "shoes_code": shoes['shoes_code'],
+                    "shoes_gender": shoes['gender'],
+                    "shoes_description": shoes['description'],
+                    "shoes_retail_price": shoes['retail_price'],
+                    "shoes_brand_id": shoes['shoes_brand_id'],
+                    "shoes_brand_name": shoes['shoes_brand_name'],
+                    "shoes_category_id": shoes['shoes_category_id'],
+                    "shoes_category_name": shoes['shoes_category_name'],
+                    "shoes_image_bytes": shoes['image_bytes'],
                     "shoes_quantity": list(shoes_quantity),
-                    "shoes_discount": {
-                        "discount_percent": None,
-                        "end_discount_date": None
-                    }
+                    "discount_percent": None,
+                    "end_discount_date": None
                 }
             return self.response(self.response_success(result))
         else:

@@ -60,7 +60,7 @@ class Customer(BaseModel):
 
 class Customer_shoes(BaseModel):
     id = models.BigAutoField(db_column='id', primary_key=True)
-    Customer = models.ForeignKey(
+    customer = models.ForeignKey(
         Customer, db_column='customer',
         blank=True, null=True,
         on_delete=models.PROTECT,
