@@ -84,9 +84,8 @@ class ShoesStore(APIView):
                 deleted_flag=False
             ).first()
             if discount:
-                sale_price = shoes['retail_price'] * ((100 - discount.discount_percent)/100)
                 shoes['discount_percent'] = discount.discount_percent
-                shoes['sale_price'] = sale_price
+                shoes['sale_price'] = int(shoes['retail_price'] * ((100 - discount.discount_percent)/100))
             else:
                 shoes['discount_percent'] = 0
                 shoes['sale_price'] = shoes['retail_price']
@@ -160,22 +159,22 @@ class ShoesStore(APIView):
                     "end_discount_date"
                     ).first()
 
-                sale_price = shoes['retail_price'] * ((100 - shoes_discount['discount_percent'])/100)
+                sale_price = int(shoes['retail_price'] * ((100 - shoes_discount['discount_percent'])/100))
 
                 result = {
                     "shoes_id": shoes['shoes_id'],
                     "shoes_name": shoes['shoes_name'],
                     "shoes_code": shoes['shoes_code'],
-                    "shoes_gender": shoes['gender'],
+                    "gender": shoes['gender'],
                     "shoes_description": shoes['description'],
-                    "shoes_retail_price": shoes['retail_price'],
+                    "retail_price": shoes['retail_price'],
                     "shoes_brand_id": shoes['shoes_brand_id'],
                     "shoes_brand_name": shoes['shoes_brand_name'],
                     "shoes_category_id": shoes['shoes_category_id'],
                     "shoes_category_name": shoes['shoes_category_name'],
-                    "shoes_image_bytes": shoes['image_bytes'],
+                    "image_bytes": shoes['image_bytes'],
                     "shoes_quantity": list(shoes_quantity),
-                    "discount_price": sale_price,
+                    "sale_price": sale_price,
                     "discount_percent": shoes_discount['discount_percent'],
                     "end_discount_date": shoes_discount['end_discount_date']
                 }
@@ -184,16 +183,16 @@ class ShoesStore(APIView):
                     "shoes_id": shoes['shoes_id'],
                     "shoes_name": shoes['shoes_name'],
                     "shoes_code": shoes['shoes_code'],
-                    "shoes_gender": shoes['gender'],
+                    "gender": shoes['gender'],
                     "shoes_description": shoes['description'],
-                    "shoes_retail_price": shoes['retail_price'],
+                    "retail_price": shoes['retail_price'],
                     "shoes_brand_id": shoes['shoes_brand_id'],
                     "shoes_brand_name": shoes['shoes_brand_name'],
                     "shoes_category_id": shoes['shoes_category_id'],
                     "shoes_category_name": shoes['shoes_category_name'],
-                    "shoes_image_bytes": shoes['image_bytes'],
+                    "image_bytes": shoes['image_bytes'],
                     "shoes_quantity": list(shoes_quantity),
-                    "discount_price": None,
+                    "sale_price": None,
                     "discount_percent": None,
                     "end_discount_date": None
                 }
