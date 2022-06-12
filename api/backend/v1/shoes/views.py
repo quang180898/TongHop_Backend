@@ -287,6 +287,7 @@ class ShoesStore(APIView):
             shoes = Shoes.objects.get(id=shoes_id, deleted_flag=False)
         except Shoes.DoesNotExist:
             return self.response_exception(code=SERVICE_CODE_NOT_FOUND)
+        date_check = datetime.now()
         shoes_same_category = Shoes.objects.filter(
             ~Q(id=shoes.id),
             Q(category_id=shoes.category_id),
@@ -308,17 +309,43 @@ class ShoesStore(APIView):
                 'retail_price'
             ).order_by('shoes_id')
             for item in shoes_same_category:
-                image = Shoes_image.objects.filter(
+                shoes_quantity = Shoes_quantity.objects.filter(
                     shoes_id=item['shoes_id'],
                     deleted_flag=False
                 ).values(
-                    'image_bytes'
+                    "size",
+                    "quantity"
+                )
+                if shoes_quantity:
+                    list_size = []
+                    for si in shoes_quantity:
+                        list_size.append({
+                            "size": si['size'],
+                            "quantity": si['quantity']
+                        })
+                    item["shoes_quantity"] = list_size
+                discount = Shoes_discount.objects.filter(
+                    shoes_id=item['shoes_id'],
+                    end_discount_date__gte=date_check,
+                    deleted_flag=False
                 ).first()
-                base64 = convert_byte_to_base64(image['image_bytes'])
-                item['image_bytes'] = base64
-            return self.response(self.response_success(list(shoes_same_category)))
+                if discount:
+                    item['discount_percent'] = discount.discount_percent
+                    item['sale_price'] = int(item['retail_price'] * ((100 - discount.discount_percent)/100))
+                else:
+                    item['discount_percent'] = 0
+                    item['sale_price'] = item['retail_price']
+                image = Shoes_image.objects.filter(
+                    shoes_id=item['shoes_id'],
+                    deleted_flag=False
+                ).first()
+                if image:
+                    base64 = image.get_image
+                    item['image_bytes'] = base64
+            self.pagination(shoes_same_category)
+            return self.response(self.response_paging(self.paging_list))
         else:
-            return self.response(self.response_success(list))
+            return self.response(self.response_paging(list))
 
     def create_or_update(self, request):
         if not request.data:
