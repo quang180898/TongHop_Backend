@@ -6,6 +6,7 @@ from config.settings import DATA_UPLOAD_MAX_MEMORY_SIZE
 from core.postgres.shoes_store.category.models import Category
 from core.postgres.shoes_store.customer.models import Customer_shoes
 from core.postgres.shoes_store.shoes.models import (
+    Brand,
     Shoes,
     Shoes_discount,
     Shoes_image,
@@ -29,6 +30,86 @@ from library.service.upload_file import get_constant_file_type_from_extension
 
 
 class ShoesStore(APIView):
+    def list_home(self, request):
+        date_check = datetime.now()
+        shoes_list = Shoes.objects.filter(
+            deleted_flag=False
+        ).annotate(
+            shoes_id=F('id'),
+            shoes_name=F('name'),
+            shoes_code=F('code'),
+            shoes_brand_id=F('brand'),
+            shoes_brand_name=F('brand__name'),
+            shoes_category_id=F('category'),
+            shoes_category_name=F('category__name')
+        ).values(
+            'shoes_id',
+            'shoes_name',
+            'shoes_code',
+            'shoes_brand_id',
+            'shoes_brand_name',
+            'gender',
+            'retail_price'
+        ).order_by('shoes_id')
+        for shoes in shoes_list:
+            brand_image = Brand.objects.filter(
+                id=shoes['shoes_brand_id'],
+                deleted_flag=False
+            ).first()
+            if brand_image:
+                shoes['shoes_brand_image'] = brand_image.get_image
+                    
+            shoes_quantity = Shoes_quantity.objects.filter(
+                shoes_id=shoes['shoes_id'],
+                deleted_flag=False
+            ).values(
+                "size",
+                "quantity"
+            )
+            if shoes_quantity:
+                list_size = []
+                for si in shoes_quantity:
+                    list_size.append({
+                        "size": si['size'],
+                        "quantity": si['quantity']
+                    })
+                shoes["shoes_quantity"] = list_size
+            discount = Shoes_discount.objects.filter(
+                shoes_id=shoes['shoes_id'],
+                end_discount_date__gte=date_check,
+                deleted_flag=False
+            ).first()
+            if discount:
+                shoes['discount_percent'] = discount.discount_percent
+                shoes['sale_price'] = int(shoes['retail_price'] * ((100 - discount.discount_percent)/100))
+            else:
+                shoes['discount_percent'] = 0
+                shoes['sale_price'] = shoes['retail_price']
+            image = Shoes_image.objects.filter(
+                shoes_id=shoes['shoes_id'],
+                deleted_flag=False
+            ).first()
+            if image:
+                base64 = image.get_image
+                shoes['image_bytes'] = base64
+
+        test = self.nested_object_list(
+            shoes_list,
+            mapping_key='shoes_brand_id',
+            fields={
+                'list_shoes': [
+                    'shoes_id',
+                    'shoes_name',
+                    'shoes_code',
+                    'gender',
+                    'retail_price',
+                    'shoes_quantity',
+                    'discount_percent',
+                    'sale_price',
+                    'image_bytes'
+                ]})
+        return self.response(self.response_success(list(test)))
+
     def list_shoes(self, request):
         shoes_name = self.request.query_params.get('shoes_name')
         category_id = self.request.query_params.get('category_id')
@@ -210,30 +291,34 @@ class ShoesStore(APIView):
             ~Q(id=shoes.id),
             Q(category_id=shoes.category_id),
             Q(deleted_flag=False)
-        ).annotate(
-            shoes_id=F('id'),
-            shoes_name=F('name'),
-            shoes_code=F('code'),
-            shoes_gender=F('gender'),
-            shoes_brand_id=F('brand'),
-            shoes_brand_name=F('brand__name')
-        ).values(
-            'shoes_id',
-            'shoes_name',
-            'shoes_code',
-            'gender',
-            'retail_price'
-        ).order_by('shoes_id')
-        for item in shoes_same_category:
-            image = Shoes_image.objects.filter(
-                shoes_id=item['shoes_id'],
-                deleted_flag=False
+        )
+        if shoes_same_category:
+            shoes_same_category = shoes_same_category.annotate(
+                shoes_id=F('id'),
+                shoes_name=F('name'),
+                shoes_code=F('code'),
+                shoes_gender=F('gender'),
+                shoes_brand_id=F('brand'),
+                shoes_brand_name=F('brand__name')
             ).values(
-                'image_bytes'
-            ).first()
-            base64 = convert_byte_to_base64(image['image_bytes'])
-            item['image_bytes'] = base64
-        return self.response(self.response_success(list(shoes_same_category)))
+                'shoes_id',
+                'shoes_name',
+                'shoes_code',
+                'gender',
+                'retail_price'
+            ).order_by('shoes_id')
+            for item in shoes_same_category:
+                image = Shoes_image.objects.filter(
+                    shoes_id=item['shoes_id'],
+                    deleted_flag=False
+                ).values(
+                    'image_bytes'
+                ).first()
+                base64 = convert_byte_to_base64(image['image_bytes'])
+                item['image_bytes'] = base64
+            return self.response(self.response_success(list(shoes_same_category)))
+        else:
+            return self.response(self.response_success(list))
 
     def create_or_update(self, request):
         if not request.data:
