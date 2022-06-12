@@ -105,8 +105,8 @@ class Account(APIView):
         if content == {}:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR)
         key_content_list = list(content.keys())
-        check_keys_list = ['user_name', 'pass_word', 'password_repeat', 'name', 'gender', 'mail', 'mobile', 'permission_code']
-
+        # check_keys_list = ['user_name', 'pass_word', 'password_repeat', 'name', 'gender', 'mail', 'mobile', 'permission_code']
+        check_keys_list = ['user_name', 'pass_word', 'password_repeat', 'name', 'mail', 'permission_code']
         name = content['name'] if content.get('name') else None
         mobile = content['mobile'] if content.get('mobile') else None
         mail = content['mail'] if content.get('mail') else None
@@ -175,12 +175,12 @@ class Account(APIView):
             name=name,
             username=user_name,
             password=make_password(pass_word),
-            mobile=mobile,
+            # mobile=mobile,
             mail=mail,
-            address=address,
-            gender=gender,
+            # address=address,
+            # gender=gender,
             permission_id=permission_code,
-            image_bytes=image.read()
+            # image_bytes=image.read()
         )
         permission = Permission.objects.filter(
             code=user_new.permission_id
@@ -190,13 +190,13 @@ class Account(APIView):
             'name'
         ).first()
 
-        subject = "HOÀN TẤT ĐĂNG KÝ"
-        message = f'Xin Chào {name}, cảm ơn vì đã đăng ký tài khoản tại website của chúng tôi!'
-        from_email=EMAIL_HOST_USER,
-        recipient_list=[user_new.mail,]
-        send_mail(subject, message, from_email, recipient_list)
-        email = EmailMessage(subject, message, from_email, recipient_list)
-        email.send()
+        # subject = "HOÀN TẤT ĐĂNG KÝ"
+        # message = f'Xin Chào {name}, cảm ơn vì đã đăng ký tài khoản tại website của chúng tôi!'
+        # from_email=EMAIL_HOST_USER,
+        # recipient_list=[user_new.mail,]
+        # send_mail(subject, message, from_email, recipient_list)
+        # email = EmailMessage(subject, message, from_email, recipient_list)
+        # email.send()
         return self.response(self.response_success({
             "user_id": user_new.id,
             "name": user_new.name,
