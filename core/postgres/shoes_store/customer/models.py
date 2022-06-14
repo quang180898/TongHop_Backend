@@ -73,6 +73,7 @@ class Customer_shoes(BaseModel):
         verbose_name=_('Shoes')
     )
     quantity = models.IntegerField(db_column='quantity', null=True, blank=True)
+    address = models.CharField(max_length=1000, db_column='address', null=True, blank=True)
     size = models.IntegerField(db_column='size', null=True, blank=True)
     price = models.IntegerField(db_column='price', null=True, blank=True)
     total = models.IntegerField(db_column='total', null=True, blank=True)

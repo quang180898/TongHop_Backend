@@ -119,6 +119,67 @@ class AccountShoes(APIView):
         sort = sorted(shoes_most_buy, key=lambda key: key['count_buy'], reverse=True)
         return self.response(self.response_success(sort))
 
+    def create(self, request):
+        if not request.body:
+            return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
+        try:
+            content = self.decode_to_json(request.body)
+        except Exception as ex:
+            return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
+
+        customer_id = content['customer_id']
+        address = content['address']
+
+        try:
+            Customer.objects.get(id=customer_id, deleted_flag=False, active_flag=True)
+        except Customer.DoesNotExist:
+            return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
+
+        list_create = []
+        list_update_size_quantity = []
+        for item in content['order']:
+            try:
+                Shoes.objects.get(id=item['shoes_id'], deleted_flag=False)
+            except Shoes.DoesNotExist:
+                return self.validate_exception(code=SERVICE_CODE_SHOES_NOT_EXIST)
+
+            # kiem tra so luong con lai co du ban hay khong
+            try:
+                shoes_quantity = Shoes_quantity.objects.get(
+                    shoes_id=item['shoes_id'],
+                    size=item['size'],
+                    deleted_flag=False
+                )
+            except Shoes_quantity.DoesNotExist:
+                return self.validate_exception("Không tìm thấy size!")
+
+            quantity_update = int(shoes_quantity.quantity - item['quantity'])
+            if quantity_update < 0:
+                return self.validate_exception("Không đủ số lượng size giày còn lại để bán!")
+            
+            list_update_size_quantity.append(Shoes_quantity(
+                id=shoes_quantity.id,
+                quantity=quantity_update,
+            ))
+
+            total = int(item['quantity'] * item['price'])
+            list_create.append(Customer_shoes(
+                shoes_id=item['shoes_id'],
+                customer_id=customer_id,
+                price=item['price'],
+                total=total,
+                quantity=item['quantity'],
+                size=item['size'],
+                address=address
+            ))
+
+        if list_create:
+            Customer_shoes.objects.bulk_create(list_create)
+        if list_update_size_quantity:
+            Shoes_quantity.objects.bulk_update(list_update_size_quantity, fields=['quantity'])
+
+        return self.response(self.response_success(True))
+
     def create_shoes_account(self, request):
         if not request.data:
             return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
