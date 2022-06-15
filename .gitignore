@@ -29,5 +29,6 @@ venv.bak/
 
 staticfiles
 
-
+database.py
+root_local.py
 
