@@ -13,4 +13,5 @@ urlpatterns = [
     path('brand/', include(URL_BACKEND_API + 'brand.urls')),
     path('discount/', include(URL_BACKEND_API + 'discount.urls')),
     path('momo/', include(URL_BACKEND_API + 'momo.urls')),
+    path('chart/', include(URL_BACKEND_API + 'chart.urls')),
 ]

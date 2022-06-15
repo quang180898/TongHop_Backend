@@ -14,6 +14,64 @@ from library.functions import convert_to_int, convert_byte_to_base64
 
 
 class AccountShoes(APIView):
+    def history(self, request):
+        customer_id = convert_to_int(self.request.query_params.get('customer_id'))
+        sort_key = convert_to_int(self.request.query_params.get('sort_key'))
+        account_shoes = Customer_shoes.objects.filter(customer_id=customer_id, deleted_flag=False)
+        if sort_key == 1:
+            account_shoes = account_shoes.annotate(
+                shoes_name=F('shoes__name'),
+                customer_name=F('customer__name')
+            ).values(
+                'id',
+                'shoes_id',
+                'shoes_name',
+                'price',
+                'total',
+                'size',
+                'quantity',
+                'customer_id',
+                'customer_name',
+                'address',
+                'created_at'
+            ).order_by('-created_at')
+        elif sort_key == 0:
+            account_shoes = account_shoes.annotate(
+                shoes_name=F('shoes__name'),
+                customer_name=F('customer__name')
+            ).values(
+                'id',
+                'shoes_id',
+                'shoes_name',
+                'price',
+                'total',
+                'size',
+                'quantity',
+                'customer_id',
+                'customer_name',
+                'address',
+                'created_at'
+            ).order_by('created_at')
+        else:
+            account_shoes = account_shoes.annotate(
+                shoes_name=F('shoes__name'),
+                customer_name=F('customer__name')
+            ).values(
+                'id',
+                'shoes_id',
+                'shoes_name',
+                'price',
+                'total',
+                'size',
+                'quantity',
+                'customer_id',
+                'customer_name',
+                'address',
+                'created_at'
+            ).order_by('id')
+        self.pagination(account_shoes)
+        return self.response(self.response_paging(self.paging_list))
+
     def list_shoes_account(self, request):
         sort_key = convert_to_int(self.request.query_params.get('sort_key'))
         account_shoes = Customer_shoes.objects.filter(deleted_flag=False)
@@ -31,6 +89,7 @@ class AccountShoes(APIView):
                 'quantity',
                 'customer_id',
                 'customer_name',
+                'address',
                 'created_at'
             ).order_by('-created_at')
         elif sort_key == 0:
@@ -47,6 +106,7 @@ class AccountShoes(APIView):
                 'quantity',
                 'customer_id',
                 'customer_name',
+                'address',
                 'created_at'
             ).order_by('created_at')
         else:
@@ -63,6 +123,7 @@ class AccountShoes(APIView):
                 'quantity',
                 'customer_id',
                 'customer_name',
+                'address',
                 'created_at'
             ).order_by('id')
         self.pagination(account_shoes)
@@ -88,6 +149,7 @@ class AccountShoes(APIView):
                 'quantity',
                 'customer_id',
                 'customer_name',
+                'address',
                 'created_at'
             ).first()
             return self.response(self.response_success(account_shoes))
@@ -180,19 +242,15 @@ class AccountShoes(APIView):
 
         return self.response(self.response_success(True))
 
-    def create_shoes_account(self, request):
+    def update_shoes_account(self, request):
         if not request.data:
             return self.response_exception(code=SERVICE_CODE_NOT_EXISTS_BODY)
         try:
             content = request.POST
         except Exception as ex:
             return self.response_exception(code=SERVICE_CODE_BODY_PARSE_ERROR, mess=str(ex))
-        key_content_list = list(content.keys())
-        check_keys_list = ['shoes_id', 'customer_id', 'size', 'price', 'quantity']
 
         customer_shoes_id = convert_to_int(content.get('customer_shoes_id'))
-        shoes_id = convert_to_int(content.get('shoes_id'))
-        customer_id = convert_to_int(content.get('customer_id'))
         price = convert_to_int(content.get('price'))
         size = convert_to_int(content.get('size'))
         quantity = convert_to_int(content.get('quantity'))
@@ -201,8 +259,6 @@ class AccountShoes(APIView):
                 cus_shoes = Customer_shoes.objects.get(id=customer_shoes_id, deleted_flag=False)
             except Customer_shoes.DoesNotExist:
                 return self.response_exception(code=SERVICE_CODE_SHOES_NOT_EXIST)
-            cus_shoes.shoes_id = shoes_id if shoes_id > 0 else cus_shoes.shoes_id
-            cus_shoes.customer_id = customer_id if customer_id > 0 else cus_shoes.customer_id
             cus_shoes.price = price if price > 0 else cus_shoes.price
             cus_shoes.size = size if size > 0 else cus_shoes.size
             cus_shoes.quantity = quantity if quantity > 0 else cus_shoes.quantity
@@ -218,46 +274,7 @@ class AccountShoes(APIView):
                 "size": cus_shoes.size
             }))
         else:
-            if not all(key in key_content_list for key in check_keys_list):
-                return self.validate_exception('Missing ' + ", ".join(str(param) for param in check_keys_list if param not in key_content_list))
-            try:
-                customer = Customer.objects.get(id=customer_id, deleted_flag=False, active_flag=True)
-            except Customer.DoesNotExist:
-                return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
-            if customer.active_flag == False:
-                return self.validate_exception( "Người dùng không thể mua hàng chi tiết xin vui lòng liên hệ trực tiếp với shop!")
-            try:
-                shoes = Shoes.objects.get(id=shoes_id, deleted_flag=False)
-            except Shoes.DoesNotExist:
-                return self.response_exception(code=SERVICE_CODE_SHOES_NOT_EXIST)
-
-            try:
-                shoes_quantity = Shoes_quantity.objects.get(shoes_id=shoes_id, size=size, deleted_flag=False)
-            except Shoes_quantity.DoesNotExist:
-                return self.validate_exception("Không tìm thấy size!")
-
-            if shoes_quantity.quantity < quantity:
-                return self.validate_exception("Không đủ số lượng size giày còn lại để bán!")
-            shoes_quantity.quantity = shoes_quantity.quantity - quantity
-            total = price * quantity
-            shoes_customer = Customer_shoes.objects.create(
-                customer_id=customer_id,
-                shoes_id=shoes_id,
-                price=price,
-                total=total,
-                quantity=quantity,
-                size=size
-            )
-            shoes_quantity.save()
-            return self.response(self.response_success({
-                "id": shoes_customer.id,
-                "customer_id": shoes_customer.customer_id,
-                "shoes_id": shoes_customer.shoes_id,
-                "price": shoes_customer.price,
-                "total": shoes_customer.total,
-                "quantity": shoes_customer.quantity,
-                "size": shoes_customer.size
-            }))
+            self.validate_exception("Missing customer_shoes_id")
 
 
     def delete_shoes_account(self, request):
