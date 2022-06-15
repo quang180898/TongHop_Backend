@@ -11,7 +11,8 @@ __pycache__/
 media/
 .idea
 .vscode
-
+database.py
+root_local.py
 *.sublime*
 .editorconfig
 
@@ -29,6 +30,4 @@ venv.bak/
 
 staticfiles
 
-database.py
-root_local.py
 
