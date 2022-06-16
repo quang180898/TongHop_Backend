@@ -360,9 +360,11 @@ class Account(APIView):
         list_email = []
         for item in customer:
             list_email.append(item['mail'])
-
-        subject = 'CHÚC MỪNG SINH NHẬT'
-        message = f'Cảm ơn bạn đã đồng hành cùng Gshoes! Gshoes gửi cho bạn mã khuyến mãi 10% mừng sinh nhật "hbpd", hãy sắm cho mình những đôi giày thật đẹp để mừng tuổi mới bạn nhé!'
-        email = EmailMessage(subject, message, to=list_email)
-        email.send()
+        if len(list_email) > 0:
+            subject = 'CHÚC MỪNG SINH NHẬT'
+            message = f'Cảm ơn bạn đã đồng hành cùng Gshoes! Gshoes gửi cho bạn mã khuyến mãi 10% mừng sinh nhật "hbpd", hãy sắm cho mình những đôi giày thật đẹp để mừng tuổi mới bạn nhé!'
+            email = EmailMessage(subject, message, to=list_email)
+            email.send()
+        else:
+            pass
         return self.response(self.response_success(True))
