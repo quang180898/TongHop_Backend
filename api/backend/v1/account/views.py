@@ -1,5 +1,5 @@
+from datetime import datetime
 import re
-
 from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import F
 from django.core.mail import send_mail, EmailMessage
@@ -37,7 +37,7 @@ from library.constant.custom_messages import (
     WRONG_PASSWORD,
     SAME_PASSWORD
 )
-from library.functions import convert_to_bool, convert_to_int, is_mobile_valid, convert_byte_to_base64
+from library.functions import convert_to_bool, convert_to_int, is_mobile_valid, convert_byte_to_base64, string_to_time
 from library.service.upload_file import get_constant_file_type_from_extension
 
 
@@ -190,13 +190,12 @@ class Account(APIView):
             'name'
         ).first()
 
-        # subject = "HOÀN TẤT ĐĂNG KÝ"
-        # message = f'Xin Chào {name}, cảm ơn vì đã đăng ký tài khoản tại website của chúng tôi!'
-        # from_email=EMAIL_HOST_USER,
-        # recipient_list=[user_new.mail,]
-        # send_mail(subject, message, from_email, recipient_list)
-        # email = EmailMessage(subject, message, from_email, recipient_list)
-        # email.send()
+        subject = 'HOÀN TẤT ĐĂNG KÝ'
+        message = f'Xin Chào {user_new.name}, cảm ơn vì đã đăng ký tài khoản tại website của chúng tôi!'
+        recipient_list=[user_new.mail, ]
+        email = EmailMessage(subject, message, to=recipient_list)
+        email.send()
+
         return self.response(self.response_success({
             "user_id": user_new.id,
             "name": user_new.name,
@@ -222,6 +221,7 @@ class Account(APIView):
         name = content.get("name")
         # mail = content.get("mail")
         mobile = content.get("mobile")
+        birth_date = content.get("birth_date")
         gender = convert_to_int(content.get("gender"))
         address = content.get("address")
         image = request.FILES['image'] if request.FILES.get('image') else None
@@ -238,6 +238,8 @@ class Account(APIView):
             size = request.headers['content-length']
             if int(size) > DATA_UPLOAD_MAX_MEMORY_SIZE:
                 return self.response_exception(code=SERVICE_CODE_FILE_SIZE)
+        if birth_date:
+            birth_date = string_to_time(birth_date, '%d/%m/%Y %H:%M:%S')
         if user_id:
             try:
                 customer = Customer.objects.get(id=user_id, deleted_flag=False)
@@ -248,6 +250,7 @@ class Account(APIView):
             customer.mobile = mobile if mobile is not None else customer.mobile
             customer.address = address if address is not None else customer.address
             customer.gender = gender if gender is not None else customer.gender
+            customer.birthdate = birth_date if birth_date is not None else customer.birthdate
             if image:
                 customer.image_bytes = image.read()
             customer.save()
@@ -255,6 +258,7 @@ class Account(APIView):
                 "customer_id": customer.id,
                 "customer_name": customer.name,
                 "customer_gender": customer.gender,
+                "customer_birthdate": customer.birthdate,
                 "customer_mobile": customer.mobile,
                 "customer_address": customer.address,
                 "customer_mail": customer.mail,
@@ -349,3 +353,16 @@ class Account(APIView):
             return self.response(self.response_success("Success!"))
         else:
             return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
+
+    def send_discount(self, request):
+        get_month = datetime.now().month
+        customer = Customer.objects.filter(deleted_flag=False, birthdate__month=get_month).values('mail')
+        list_email = []
+        for item in customer:
+            list_email.append(item['mail'])
+
+        subject = 'CHÚC MỪNG SINH NHẬT'
+        message = f'Cảm ơn bạn đã đồng hành cùng Gshoes! Gshoes gửi cho bạn mã khuyến mãi 10% mừng sinh nhật "hbpd", hãy sắm cho mình những đôi giày thật đẹp để mừng tuổi mới bạn nhé!'
+        email = EmailMessage(subject, message, to=list_email)
+        email.send()
+        return self.response(self.response_success(True))

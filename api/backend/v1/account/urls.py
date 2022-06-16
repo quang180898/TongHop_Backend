@@ -8,5 +8,6 @@ urlpatterns = [
     path('change_password/', Account.as_view({'post': 'change_password'})),
     path('update_active/', Account.as_view({'post': 'update_active'})),
     path('delete/', Account.as_view({'post': 'delete_account'})),
-    path('update_profile/', Account.as_view({'post': 'update_profile'}))
+    path('update_profile/', Account.as_view({'post': 'update_profile'})),
+    path('send_discount/', Account.as_view({'get': 'send_discount'}))
 ]

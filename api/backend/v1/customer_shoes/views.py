@@ -191,6 +191,7 @@ class AccountShoes(APIView):
 
         customer_id = content['customer_id']
         address = content['address']
+        discount_code = content.get('discount_code', None)
 
         try:
             Customer.objects.get(id=customer_id, deleted_flag=False, active_flag=True)
@@ -223,8 +224,17 @@ class AccountShoes(APIView):
                 id=shoes_quantity.id,
                 quantity=quantity_update,
             ))
+            if discount_code is not None:
+                if discount_code == 'hpbd':
+                    if item['quantity'] > 1:
+                        self.validate_exception("Mã Khuyến mãi chỉ có thể mua 1 sản phẩm!")
 
-            total = int(item['quantity'] * item['price'])
+                    total = int(item['price']*0.9)
+                else:
+                    total = int(item['quantity'] * item['price'])
+            else:
+                total = int(item['quantity'] * item['price'])
+
             list_create.append(Customer_shoes(
                 shoes_id=item['shoes_id'],
                 customer_id=customer_id,
@@ -234,6 +244,12 @@ class AccountShoes(APIView):
                 size=item['size'],
                 address=address
             ))
+        if discount_code is not None:
+            if discount_code == 'hpbd':
+                if len(list_create) > 1:
+                    self.validate_exception("Mã Khuyến mãi chỉ có thể mua 1 sản phẩm!")
+            else:
+                self.validate_exception("Mã Khuyến mãi không tồn tại!")
 
         if list_create:
             Customer_shoes.objects.bulk_create(list_create)
