@@ -6,6 +6,7 @@ from library.constant.api import (
     SERVICE_CODE_NOT_EXISTS_BODY, SERVICE_CODE_BODY_PARSE_ERROR, SERVICE_CODE_CUSTOMER_ERROR,
     SERVICE_CODE_WRONG_PASSWORD
 )
+from library.functions import convert_byte_to_base64
 
 
 class LoginView(APIView):
@@ -34,6 +35,7 @@ class LoginView(APIView):
             'mail',
             'mobile',
             'address',
+            'image_bytes',
             'permission__code',
             'permission__name',
         ).first()
@@ -46,6 +48,7 @@ class LoginView(APIView):
                     "mail": customer_login['mail'],
                     "mobile": customer_login['mobile'],
                     "address": customer_login['address'],
+                    "image_bytes": convert_byte_to_base64(customer_login['image_bytes']),
                     "permission_code": customer_login['permission__code'],
                     "permission_name": customer_login['permission__name'],
                 }))

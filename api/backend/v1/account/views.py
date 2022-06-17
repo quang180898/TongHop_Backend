@@ -84,6 +84,7 @@ class Account(APIView):
             'mobile',
             'username',
             'mail',
+            'address',
             'image_bytes',
             'permission_code',
             'permission_name',
