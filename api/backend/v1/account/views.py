@@ -356,14 +356,13 @@ class Account(APIView):
             return self.response_exception(code=SERVICE_CODE_CUSTOMER_NOT_EXIST)
 
     def send_discount(self, request):
-        get_month = datetime.now().month
-        customer = Customer.objects.filter(deleted_flag=False, birthdate__month=get_month).values('mail')
+        customer = Customer.objects.filter(deleted_flag=False).values('mail')
         list_email = []
         for item in customer:
             list_email.append(item['mail'])
         if len(list_email) > 0:
-            subject = 'CHÚC MỪNG SINH NHẬT'
-            message = f'Cảm ơn bạn đã đồng hành cùng Gshoes! Gshoes gửi cho bạn mã khuyến mãi 10% mừng sinh nhật "hbpd", hãy sắm cho mình những đôi giày thật đẹp để mừng tuổi mới bạn nhé!'
+            subject = 'KHUYẾN MÃI CÙNG GSHOES'
+            message = f'Cảm ơn bạn đã đồng hành cùng Gshoes! Gshoes gửi cho bạn mã khuyến mãi 10% "happyweekend", hãy sắm cho mình những đôi giày thật đẹp bạn nhé!'
             email = EmailMessage(subject, message, to=list_email)
             email.send()
         else:

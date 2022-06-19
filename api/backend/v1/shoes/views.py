@@ -115,6 +115,7 @@ class ShoesStore(APIView):
         category_id = self.request.query_params.get('category_id')
         brand_id = self.request.query_params.get('brand_id')
         gender = self.request.query_params.get('gender') # 1 male, 2 female
+        sort_key = self.request.query_params.get('sort_key')
         date_check = datetime.now()
         shoes_list = Shoes.objects.filter(deleted_flag=False)
         if shoes_name:
@@ -125,24 +126,61 @@ class ShoesStore(APIView):
             shoes_list = shoes_list.filter(brand_id=brand_id)
         if gender:
             shoes_list = shoes_list.filter(gender=gender)
-
-        shoes_list = shoes_list.annotate(
-            shoes_id=F('id'),
-            shoes_name=F('name'),
-            shoes_code=F('code'),
-            shoes_brand_id=F('brand'),
-            shoes_brand_name=F('brand__name'),
-            shoes_category_id=F('category'),
-            shoes_category_name=F('category__name')
-        ).values(
-            'shoes_id',
-            'shoes_name',
-            'shoes_code',
-            'shoes_brand_id',
-            'shoes_brand_name',
-            'gender',
-            'retail_price'
-        ).order_by('shoes_id')
+        if sort_key is not None:
+            if int(sort_key) == 1:
+                shoes_list = shoes_list.annotate(
+                    shoes_id=F('id'),
+                    shoes_name=F('name'),
+                    shoes_code=F('code'),
+                    shoes_brand_id=F('brand'),
+                    shoes_brand_name=F('brand__name'),
+                    shoes_category_id=F('category'),
+                    shoes_category_name=F('category__name')
+                ).values(
+                    'shoes_id',
+                    'shoes_name',
+                    'shoes_code',
+                    'shoes_brand_id',
+                    'shoes_brand_name',
+                    'gender',
+                    'retail_price'
+                ).order_by('-retail_price')
+            elif int(sort_key) == 0:
+                shoes_list = shoes_list.annotate(
+                    shoes_id=F('id'),
+                    shoes_name=F('name'),
+                    shoes_code=F('code'),
+                    shoes_brand_id=F('brand'),
+                    shoes_brand_name=F('brand__name'),
+                    shoes_category_id=F('category'),
+                    shoes_category_name=F('category__name')
+                ).values(
+                    'shoes_id',
+                    'shoes_name',
+                    'shoes_code',
+                    'shoes_brand_id',
+                    'shoes_brand_name',
+                    'gender',
+                    'retail_price'
+                ).order_by('retail_price')
+        else:
+            shoes_list = shoes_list.annotate(
+                shoes_id=F('id'),
+                shoes_name=F('name'),
+                shoes_code=F('code'),
+                shoes_brand_id=F('brand'),
+                shoes_brand_name=F('brand__name'),
+                shoes_category_id=F('category'),
+                shoes_category_name=F('category__name')
+            ).values(
+                'shoes_id',
+                'shoes_name',
+                'shoes_code',
+                'shoes_brand_id',
+                'shoes_brand_name',
+                'gender',
+                'retail_price'
+            ).order_by('shoes_id')
         for shoes in shoes_list:
             shoes_quantity = Shoes_quantity.objects.filter(
                 shoes_id=shoes['shoes_id'],

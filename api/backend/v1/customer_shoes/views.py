@@ -225,7 +225,7 @@ class AccountShoes(APIView):
                 quantity=quantity_update,
             ))
             if discount_code is not None:
-                if discount_code == 'hpbd':
+                if discount_code == 'happyweekend':
                     if item['quantity'] > 1:
                         self.validate_exception("Mã Khuyến mãi chỉ có thể mua 1 sản phẩm!")
 
@@ -245,11 +245,11 @@ class AccountShoes(APIView):
                 address=address
             ))
         if discount_code is not None:
-            if discount_code == 'hpbd':
+            if discount_code == 'happyweekend':
                 if len(list_create) > 1:
                     self.validate_exception("Mã Khuyến mãi chỉ có thể mua 1 sản phẩm!")
             else:
-                self.validate_exception("Mã Khuyến mãi không tồn tại!")
+                self.validate_exception("Mã Khuyến mãi không hợp lệ!")
 
         if list_create:
             Customer_shoes.objects.bulk_create(list_create)
